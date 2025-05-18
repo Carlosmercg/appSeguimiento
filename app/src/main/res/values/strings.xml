@@ -1,3 +1,23 @@
 <resources>
-    <string name="app_name">taller3</string>
+    <string name="app_name">Taller3 Computacion Movil</string>
+
+    <!-- ========== LOGIN ACTIVITY ========== -->
+    <string name="titulo_login">¡Bienvenido a!</string>
+    <string name="descripcion_login">Ingresa con tu cuenta o crea una nueva.</string>
+    <string name="sign_in">SIGN IN</string>
+    <string name="log_in">LOG IN</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+
+    <!-- ========== SIGN UP ACTIVITY ========== -->
+    <string name="registro_titulo">Regístrate!</string>
+    <string name="registro_descripcion">Crea una cuenta con tu correo</string>
+    <string name="hint_nombres">Nombres</string>
+    <string name="hint_apellidos">Apellidos</string>
+    <string name="hint_email">Correo electrónico</string>
+    <string name="hint_password">Contraseña</string>
+    <string name="hint_confirmar_password">Confirmar contraseña</string>
+    <string name="btn_camara">Cámara</string>
+    <string name="btn_galeria">Galería</string>
+    <string name="btn_crear_cuenta">Crear Cuenta</string>
 </resources>

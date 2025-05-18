@@ -2,7 +2,15 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.Taller3" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <!-- Primarios -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryVariant">@color/primaryDark</item>
+        <!-- Secundarios -->
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="colorSecondaryVariant">@color/secondaryDark</item>
+        <!-- Ventanas y sistema -->
+        <item name="android:statusBarColor">@color/primaryDark</item>
+        <item name="android:windowBackground">@color/background</item>
     </style>
 
     <style name="Theme.Taller3" parent="Base.Theme.Taller3" />
