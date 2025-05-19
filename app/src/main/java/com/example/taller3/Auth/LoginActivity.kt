@@ -1,5 +1,6 @@
 package com.example.taller3.Auth
 
+import android.Manifest                          // ← AÑADIDO
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -26,9 +27,11 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
     private lateinit var auth: FirebaseAuth
     private val db by lazy { FirebaseFirestore.getInstance() }
+
+    // lanzador de permisito
     private val permisoNotifsLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { concedido: Boolean ->
+    ) { concedido ->
         if (concedido) {
             iniciarServicioDisp()
         } else {
@@ -40,6 +43,7 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        solicitarPermisoNotificacion()
 
         auth = FirebaseAuth.getInstance()
         binding.btnLogin.isEnabled = false
@@ -113,6 +117,7 @@ class LoginActivity : AppCompatActivity() {
             startActivity(Intent(this, SignUpActivity::class.java))
         }
 
+        // Inicia tu servicio como antes (sin tocar)
         Intent(this, ServicioDisp::class.java).also { startService(it) }
     }
 
@@ -125,39 +130,45 @@ class LoginActivity : AppCompatActivity() {
         binding.btnLogin.isEnabled = emailValid && passwordValid
     }
 
+
+    // -----------------------------------NOTIFICACIONES-------------------------------------------------------
     private fun mostrarDialogoJustificacion() {
         AlertDialog.Builder(this)
             .setTitle("Permiso requerido")
             .setMessage(
-                "Las notificaciones deben ser activadas " +
+                "Las notificaciones deben estar activadas " +
                         "para observar el cambio de la lista de usuarios."
             )
-            .setPositiveButton("Aceptar") { _, _ ->
-                permisoNotifsLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            .setPositiveButton("Aceptar") { dialog, _ ->
+                dialog.dismiss()
+                permisoNotifsLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            .setNegativeButton("Entiendo, no lo quiero aceptar") { dialog, _ ->
+                dialog.dismiss()
+                Toast.makeText(this, "No recibirás notificaciones", Toast.LENGTH_SHORT).show()
             }
             .setCancelable(false)
             .show()
     }
+
+
     private fun solicitarPermisoNotificacion() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val estado = ContextCompat.checkSelfPermission(
-                this, android.Manifest.permission.POST_NOTIFICATIONS
-            )
-            if (estado == PackageManager.PERMISSION_GRANTED) {
-                // Ya tenía permiso
+            if (ContextCompat.checkSelfPermission(
+                    this, Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
                 iniciarServicioDisp()
             } else {
-                // No hay permiso: lánzalo
-                permisoNotifsLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                permisoNotifsLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         } else {
-            // En versiones anteriores no hace falta pedirlo
             iniciarServicioDisp()
         }
     }
+
     private fun iniciarServicioDisp() {
         val intentServicio = Intent(this, ServicioDisp::class.java)
         startService(intentServicio)
     }
-
 }
