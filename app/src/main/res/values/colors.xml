@@ -1,5 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <!-- 🔹 Colores Primarios (Rojo) -->
+    <color name="primary">#B91C1C</color>        <!-- Rojo Intenso -->
+    <color name="primaryDark">#7F1D1D</color>    <!-- Rojo Muy Oscuro -->
+    <color name="primaryLight">#F87171</color>   <!-- Rojo Claro Vibrante -->
+
+    <!-- 🔹 Colores Secundarios (Rojos complementarios) -->
+    <color name="secondary">#DC2626</color>       <!-- Rojo Medio -->
+    <color name="secondaryLight">#FCA5A5</color>  <!-- Rojo Suave -->
+    <color name="secondaryDark">#991B1B</color>   <!-- Rojo Intenso Oscuro -->
+
+    <!-- 📝 Colores de Texto -->
+    <color name="textTitle">#7F1D1D</color>       <!-- Rojo Oscuro para Títulos -->
+    <color name="textSubtitle">#B91C1C</color>    <!-- Rojo Intenso para Subtítulos -->
+    <color name="textParagraph">#374151</color>   <!-- Gris Oscuro para Párrafos -->
+    <color name="textHint">#FECACA</color>        <!-- Rojo Pastel para Hints -->
+    <color name="textDisabled">#FCA5A5</color>    <!-- Rojo Muy Claro para Texto Deshabilitado -->
+
+    <!-- ✂️ Divisores y Separadores -->
+    <color name="dividerLight">#FECACA</color>    <!-- Rojo Claro para Líneas -->
+    <color name="dividerDark">#7F1D1D</color>     <!-- Rojo Oscuro para Secciones Importantes -->
+
+    <!-- 🖼️ Fondos y Tarjetas -->
+    <color name="background">#FFF1F2</color>        <!-- Fondo General Rosado Claro -->
+    <color name="cardBackground">#FCA5A5</color>    <!-- Fondo de Tarjetas -->
+    <color name="modalBackground">#FCDCDC</color>   <!-- Fondo de Modales -->
+
+    <!-- 🎨 Formas y Componentes -->
+    <color name="shapePrimary">#DC2626</color>     <!-- Rojo para Bordes y Formas -->
+    <color name="shapeSecondary">#EF4444</color>   <!-- Rojo más Brillante -->
+    <color name="shapeDisabled">#FECACA</color>    <!-- Rojo Suave para Estados Inactivos -->
+
+    <!-- ✅ Estados: aquí los errores serán azules -->
+    <color name="errorColor">#1E3A8A</color>       <!-- Azul Profundo para Errores -->
+    <color name="successColor">#15803D</color>     <!-- Verde para Éxito -->
+    <color name="warningColor">#F59E0B</color>     <!-- Amarillo para Advertencias -->
+
+    <!-- 🎛️ Botones -->
+    <color name="buttonPrimary">#B91C1C</color>     <!-- Rojo Principal -->
+    <color name="buttonSecondary">#DC2626</color>   <!-- Rojo Intenso -->
+    <color name="buttonDisabled">#FCA5A5</color>    <!-- Rojo Claro -->
+
+    <!-- 🛠️ Sombras y Bordes -->
+    <color name="borderColor">#FECACA</color>       <!-- Rojo Muy Suave para Bordes -->
+    <color name="shadowColor">#991B1B</color>       <!-- Rojo Oscuro para Sombras -->
+
+    <!-- 🧭 Navegación -->
+    <color name="navTextColor">#FFFFFF</color>      <!-- Blanco para texto de navegación -->
+    <color name="navIconColor">#FECACA</color>      <!-- Rojo Claro para íconos -->
+
+    <!-- Grises de respaldo -->
+    <color name="gray">#757575</color>
+    <color name="gray_dark">#424242</color>
+
+    <!-- Básicos -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
 </resources>
