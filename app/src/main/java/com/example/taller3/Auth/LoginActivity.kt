@@ -2,19 +2,21 @@ package com.example.taller3.Auth
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.util.Patterns
 import android.view.inputmethod.EditorInfo
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.addTextChangedListener
+import com.example.taller3.MenuAccountActivity
 import com.example.taller3.databinding.ActivityLoginBinding
-//import com.example.taller3.HomeActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.firestore.FirebaseFirestore
 
 class LoginActivity : AppCompatActivity() {
+
     private lateinit var binding: ActivityLoginBinding
     private lateinit var auth: FirebaseAuth
     private val db by lazy { FirebaseFirestore.getInstance() }
@@ -44,22 +46,35 @@ class LoginActivity : AppCompatActivity() {
             val email = binding.emailEditText.text.toString().trim()
             val password = binding.passwordEditText.text.toString().trim()
 
+            if (email.isEmpty() || password.isEmpty()) {
+                Toast.makeText(this, "Completa todos los campos", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
             auth.signInWithEmailAndPassword(email, password)
                 .addOnSuccessListener {
-                    val uid = auth.currentUser?.uid ?: ""
+                    val uid = auth.currentUser?.uid
+                    if (uid == null) {
+                        Toast.makeText(this, "No se pudo obtener el UID del usuario", Toast.LENGTH_LONG).show()
+                        return@addOnSuccessListener
+                    }
+
+                    Log.d("LoginActivity", "UID autenticado: $uid")
+
                     db.collection("usuarios").document(uid).get()
                         .addOnSuccessListener { doc ->
                             if (doc.exists()) {
                                 Toast.makeText(this, "¡Bienvenido!", Toast.LENGTH_SHORT).show()
-                                /*startActivity(Intent(this, HomeActivity::class.java).apply {
+                                startActivity(Intent(this, MenuAccountActivity::class.java).apply {
                                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                                })*/
+                                })
                             } else {
                                 Toast.makeText(this, "Usuario autenticado pero no encontrado en Firestore", Toast.LENGTH_LONG).show()
                             }
                         }
                         .addOnFailureListener {
-                            Toast.makeText(this, "Error al verificar datos del usuario", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this, "Error al verificar datos del usuario: ${it.message}", Toast.LENGTH_LONG).show()
+                            Log.e("LoginActivity", "Firestore error: ", it)
                         }
                 }
                 .addOnFailureListener { ex ->
@@ -72,6 +87,7 @@ class LoginActivity : AppCompatActivity() {
                         }
                         else -> {
                             Toast.makeText(this, "Error: ${ex.localizedMessage}", Toast.LENGTH_LONG).show()
+                            Log.e("LoginActivity", "Firebase Auth error: ", ex)
                         }
                     }
                 }

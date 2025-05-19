@@ -1,10 +1,10 @@
 package com.example.taller3.Models
 
-class Usuario (
+data class Usuario(
     val nombre: String = "",
     val apellido: String = "",
-    val correo: String = "",
+    val email: String = "",
     val password: String = "",
     val id: String = "",
-    val fotoPerfilUrl: String = "",
+    val fotoPerfilUrl: String = ""
 )
