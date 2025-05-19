@@ -17,54 +17,47 @@ import com.example.taller3.Models.Usuario
 import com.example.taller3.mapa.MapaLocations
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.*
+import com.example.taller3.R
 
-/**
- * Servicio que, mientras esté activo, se suscribe a los cambios
- * en la colección "usuarios" de Firestore y dispara notificaciones
- * locales cuando alguien se marca como disponible.
- */
 class ServicioDisp : Service() {
 
-    // Contador para dar ID único a cada notificación
+    // lo de cantidad++, lo usamos como un tipo de "id" para cada notif
     private var contNotif: Int = 0
 
-    // Instancia de Firestore
+    // instanciar firestore
     private lateinit var bd: FirebaseFirestore
 
-    // Registro de la escucha para poder cancelarla luego
+    // registro de la escucha para poder apagarla o prenderla luego en el codigo
     private var registroEscucha: ListenerRegistration? = null
 
     override fun onCreate() {
         super.onCreate()
 
-        // 1) Inicializa Firestore
+        // iniciar firestore
         bd = FirebaseFirestore.getInstance()
-
-        // 2) Crea el canal de notificaciones (código copiado de la PPT) :contentReference[oaicite:2]{index=2}:contentReference[oaicite:3]{index=3}
         crearCanalNotificaciones()
 
-        // 3) Se suscribe a la colección "usuarios"
+        // nos suscribimos a la coleccion usuarios de nuestra bd
         registroEscucha = bd.collection("usuarios")
             .addSnapshotListener(object : EventListener<QuerySnapshot> {
                 override fun onEvent(
                     snapshots: QuerySnapshot?,
                     error: FirebaseFirestoreException?
                 ) {
-                    // Si hay error o no hay datos, no hace nada
+                    // si hay error o no hay datos no hacemos nadita
                     if (error != null || snapshots == null) {
-                        // aquí podrías loggear el error si quisieras
+
                     } else {
-                        // Recorre cada cambio en los documentos
                         for (cambio in snapshots.getDocumentChanges()) {
-                            // Solo nos interesan las modificaciones
+                            // hay cambios?
                             if (cambio.getType() == DocumentChange.Type.MODIFIED) {
-                                // Lee el campo "disponible"
+                                // leemos el campo "disponible"
                                 val disponibleObj = cambio.document.getBoolean("disponible")
                                 if (disponibleObj != null && disponibleObj) {
-                                    // Convierte a nuestra clase Usuario
+                                    // convertimos el usuario a objeto dentro de models
                                     val usuario = cambio.document.toObject(Usuario::class.java)
 
-                                    // Decide a qué pantalla mandar al tocar la notificación
+                                    // a qué pantalla te enviamos?
                                     val claseDestino: Class<*> =
                                         if (FirebaseAuth.getInstance().currentUser == null) {
                                             LoginActivity::class.java
@@ -72,14 +65,8 @@ class ServicioDisp : Service() {
                                             MapaLocations::class.java
                                         }
 
-                                    // Construye la notificación (PPT) :contentReference[oaicite:4]{index=4}:contentReference[oaicite:5]{index=5}
-                                    val notificacion: Notification = crearNotificacion(
-                                        "Usuario disponible",
-                                        usuario.nombre + " acaba de estar disponible",
-                                        R.drawable.baseline_notifications_none_24,
-                                        claseDestino
-                                    )
-                                    // La envía (PPT) :contentReference[oaicite:6]{index=6}:contentReference[oaicite:7]{index=7}
+                                   // crear la notif como tal
+                                    val notificacion: Notification = crearNotificacion("Usuario disponible", usuario.nombre + " acaba de estar disponible", icono = R.drawable.luz_notif, claseDestino)
                                     enviarNotificacion(notificacion)
                                 }
                             }
@@ -89,7 +76,7 @@ class ServicioDisp : Service() {
             })
     }
 
-    // Servicio en modo "sticky" para que Android lo intente reiniciar si lo mata
+    // servicio en modo "sticky" para que android lo intente reiniciar si lo mata por x o y motivo
     override fun onStartCommand(
         intent: Intent?,
         flags: Int,
@@ -98,7 +85,7 @@ class ServicioDisp : Service() {
         return START_STICKY
     }
 
-    // Cuando el servicio se destruye, cancelamos la escucha
+    // en el ondestrpy ya no mandamos notifs para dejalo simple
     override fun onDestroy() {
         registroEscucha?.remove()
         super.onDestroy()
@@ -109,7 +96,7 @@ class ServicioDisp : Service() {
         return null
     }
 
-    // === Método copiado tal cual de la PPT === :contentReference[oaicite:8]{index=8}:contentReference[oaicite:9]{index=9}
+    // diapositivas metodos
     private fun crearCanalNotificaciones() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val nombreCanal = "canal_disponibilidad"
@@ -122,7 +109,7 @@ class ServicioDisp : Service() {
         }
     }
 
-    // === Método copiado tal cual de la PPT === :contentReference[oaicite:10]{index=10}:contentReference[oaicite:11]{index=11}
+ // -------Crear notif ---- diapositiva
     private fun crearNotificacion(
         titulo: String,
         texto: String,
@@ -145,7 +132,7 @@ class ServicioDisp : Service() {
         return builder.build()
     }
 
-    // === Método copiado tal cual de la PPT === :contentReference[oaicite:12]{index=12}:contentReference[oaicite:13]{index=13}
+    // metodo diapositiva para enviar la notif
     private fun enviarNotificacion(notificacion: Notification) {
         contNotif++
         val gestorCompat = NotificationManagerCompat.from(this)

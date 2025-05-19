@@ -1,14 +1,20 @@
 package com.example.taller3.Auth
 
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.util.Patterns
 import android.view.inputmethod.EditorInfo
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.widget.addTextChangedListener
 import com.example.taller3.MenuAccountActivity
+import com.example.taller3.Services.ServicioDisp
 import com.example.taller3.databinding.ActivityLoginBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
@@ -20,6 +26,15 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
     private lateinit var auth: FirebaseAuth
     private val db by lazy { FirebaseFirestore.getInstance() }
+    private val permisoNotifsLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { concedido: Boolean ->
+        if (concedido) {
+            iniciarServicioDisp()
+        } else {
+            mostrarDialogoJustificacion()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -97,6 +112,8 @@ class LoginActivity : AppCompatActivity() {
         binding.btnSignUp.setOnClickListener {
             startActivity(Intent(this, SignUpActivity::class.java))
         }
+
+        Intent(this, ServicioDisp::class.java).also { startService(it) }
     }
 
     // Valida correo y contraseña
@@ -107,4 +124,40 @@ class LoginActivity : AppCompatActivity() {
         val passwordValid = binding.passwordEditText.text.toString().trim().isNotEmpty()
         binding.btnLogin.isEnabled = emailValid && passwordValid
     }
+
+    private fun mostrarDialogoJustificacion() {
+        AlertDialog.Builder(this)
+            .setTitle("Permiso requerido")
+            .setMessage(
+                "Las notificaciones deben ser activadas " +
+                        "para observar el cambio de la lista de usuarios."
+            )
+            .setPositiveButton("Aceptar") { _, _ ->
+                permisoNotifsLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            }
+            .setCancelable(false)
+            .show()
+    }
+    private fun solicitarPermisoNotificacion() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val estado = ContextCompat.checkSelfPermission(
+                this, android.Manifest.permission.POST_NOTIFICATIONS
+            )
+            if (estado == PackageManager.PERMISSION_GRANTED) {
+                // Ya tenía permiso
+                iniciarServicioDisp()
+            } else {
+                // No hay permiso: lánzalo
+                permisoNotifsLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            }
+        } else {
+            // En versiones anteriores no hace falta pedirlo
+            iniciarServicioDisp()
+        }
+    }
+    private fun iniciarServicioDisp() {
+        val intentServicio = Intent(this, ServicioDisp::class.java)
+        startService(intentServicio)
+    }
+
 }
