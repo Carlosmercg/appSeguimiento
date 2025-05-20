@@ -1,13 +1,12 @@
 package com.example.taller3.Auth
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
+import android.location.Location
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Patterns
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
@@ -17,6 +16,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.example.taller3.Models.Usuario
 import com.example.taller3.databinding.ActivitySignUpBinding
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.io.File
@@ -28,6 +29,10 @@ class SignUpActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private val db by lazy { FirebaseFirestore.getInstance() }
 
+    private lateinit var locationClient: FusedLocationProviderClient
+    private var latitud: Double = 0.0
+    private var longitud: Double = 0.0
+
     private var uriImagenPerfil: Uri? = null
     private var archivoImagen: File? = null
 
@@ -36,8 +41,8 @@ class SignUpActivity : AppCompatActivity() {
 
     private val permisoGaleria = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
         Manifest.permission.READ_MEDIA_IMAGES else Manifest.permission.READ_EXTERNAL_STORAGE
-
     private val permisoCamara = Manifest.permission.CAMERA
+    private val permisoUbicacion = Manifest.permission.ACCESS_FINE_LOCATION
 
     private var intentosGaleria = 0
     private var intentosCamara = 0
@@ -48,8 +53,11 @@ class SignUpActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         auth = FirebaseAuth.getInstance()
+        locationClient = LocationServices.getFusedLocationProviderClient(this)
+
         configurarLaunchers()
         configurarEventos()
+        obtenerUbicacion()
     }
 
     private fun configurarLaunchers() {
@@ -98,7 +106,9 @@ class SignUpActivity : AppCompatActivity() {
                         email = usuario.email,
                         password = usuario.password,
                         id = uid,
-                        fotoPerfilUrl = uriImagenPerfil.toString()
+                        fotoPerfilUrl = uriImagenPerfil.toString(),
+                        latitud = latitud,
+                        longitud = longitud
                     )
 
                     db.collection("usuarios").document(uid).set(usuarioFinal)
@@ -113,6 +123,22 @@ class SignUpActivity : AppCompatActivity() {
                 .addOnFailureListener {
                     Toast.makeText(this, "Error al registrar", Toast.LENGTH_SHORT).show()
                 }
+        }
+    }
+
+    private fun obtenerUbicacion() {
+        if (ContextCompat.checkSelfPermission(this, permisoUbicacion) == PackageManager.PERMISSION_GRANTED) {
+            locationClient.lastLocation.addOnSuccessListener { location: Location? ->
+                location?.let {
+                    latitud = it.latitude
+                    longitud = it.longitude
+                    Toast.makeText(this, "Ubicación obtenida", Toast.LENGTH_SHORT).show()
+                } ?: run {
+                    Toast.makeText(this, "Ubicación no disponible", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } else {
+            requestPermissions(arrayOf(permisoUbicacion), 102)
         }
     }
 
@@ -197,11 +223,7 @@ class SignUpActivity : AppCompatActivity() {
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        resultados: IntArray
-    ) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, resultados: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, resultados)
         if (resultados.firstOrNull() != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this, "Permiso denegado", Toast.LENGTH_SHORT).show()
@@ -211,6 +233,7 @@ class SignUpActivity : AppCompatActivity() {
         when (requestCode) {
             100 -> launcherGaleria.launch("image/*")
             101 -> abrirCamara()
+            102 -> obtenerUbicacion()
         }
     }
 }

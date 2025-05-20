@@ -6,5 +6,7 @@ data class Usuario(
     val email: String = "",
     val password: String = "",
     val id: String = "",
-    val fotoPerfilUrl: String = ""
+    val fotoPerfilUrl: String = "",
+    val latitud: Double = 0.0,
+    val longitud: Double = 0.0
 )
