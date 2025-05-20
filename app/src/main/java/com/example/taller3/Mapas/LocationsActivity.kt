@@ -2,6 +2,7 @@ package com.example.taller3.Mapas
 
 import android.app.UiModeManager
 import android.content.Context
+import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.location.Geocoder
@@ -15,6 +16,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
+import com.example.taller3.MenuAccountActivity
 import com.example.taller3.R
 import com.example.taller3.databinding.ActivityLocationsBinding
 import com.google.android.gms.common.api.ResolvableApiException
@@ -117,6 +119,10 @@ class LocationsActivity : AppCompatActivity() {
         map.setMultiTouchControls(true)
 
         loadMarkersFromJson("locations.json")
+
+        binding.menu.setOnClickListener{
+            startActivity(Intent(this, MenuAccountActivity::class.java))
+        }
 
     }
 
