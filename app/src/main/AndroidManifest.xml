@@ -32,6 +32,9 @@
             android:name=".UsuariosDisponiblesActivity"
             android:exported="false" />
         <activity
+            android:name=".Mapas.DisponibleActivity"
+            android:exported="false" />
+        <activity
             android:name=".Mapas.LocationsActivity"
             android:exported="false" />
 
