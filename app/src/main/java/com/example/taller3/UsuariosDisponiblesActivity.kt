@@ -46,7 +46,7 @@ class UsuariosDisponiblesActivity : AppCompatActivity() {
     private fun cargarUsuariosDisponibles() {
         FirebaseFirestore.getInstance()
             .collection("usuarios")
-            //.whereEqualTo("disponible", true)
+            .whereEqualTo("disponible", true)
             .get()
             .addOnSuccessListener { resultado ->
                 usuarios.clear()
