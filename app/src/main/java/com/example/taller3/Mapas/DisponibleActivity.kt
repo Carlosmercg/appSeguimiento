@@ -237,6 +237,10 @@ class DisponibleActivity : AppCompatActivity() {
 
     fun addMarker(p: GeoPoint, snippet: String) {
 
+        if (marcador != null) {
+            map.overlays.remove(marcador)
+        }
+
         val marcador = createMarker(
             p, snippet, "Posicion de Usuario Disponible",
             R.drawable.baseline_arrow_drop_down_24

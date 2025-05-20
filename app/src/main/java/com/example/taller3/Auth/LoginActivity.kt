@@ -42,7 +42,7 @@ class LoginActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
 
         if (auth.currentUser != null) {
-            startActivity(Intent(this, DisponibleActivity::class.java).apply {
+            startActivity(Intent(this, LocationsActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             })
             return
