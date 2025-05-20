@@ -32,7 +32,22 @@ class MenuAccountActivity : AppCompatActivity() {
         }
 
         val uid = user.uid
+        cargarDatosUsuario(uid)
 
+        binding.btnCerrarSesion.setOnClickListener {
+            auth.signOut()
+            startActivity(Intent(this, LoginActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            })
+            finish()
+        }
+
+        binding.btnVerUsuariosDisponibles.setOnClickListener {
+            startActivity(Intent(this, UsuariosDisponiblesActivity::class.java))
+        }
+    }
+
+    private fun cargarDatosUsuario(uid : String) {
         db.collection("usuarios").document(uid).get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
@@ -59,13 +74,5 @@ class MenuAccountActivity : AppCompatActivity() {
                 Toast.makeText(this, "Error al cargar datos del usuario", Toast.LENGTH_LONG).show()
                 Log.e("MenuAccount", "Firestore error: ", it)
             }
-
-        binding.btnCerrarSesion.setOnClickListener {
-            auth.signOut()
-            startActivity(Intent(this, LoginActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            })
-            finish()
-        }
     }
 }
