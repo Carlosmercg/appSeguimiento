@@ -28,7 +28,10 @@ import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.location.LocationSettingsResponse
 import com.google.android.gms.location.Priority
 import com.google.android.gms.location.SettingsClient
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.tasks.Task
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -181,10 +184,24 @@ class LocationsActivity : AppCompatActivity() {
                             addLocationMarker()
                             map.controller.setZoom(18.0)
                             map.controller.animateTo(posicion)
+                            val firestore = FirebaseFirestore.getInstance()
+                            val usuario = Firebase.auth.currentUser
+
+                            val nuevaUbicacion = mapOf(
+                                "latitud" to newPosition.latitude,
+                                "longitud" to newPosition.longitude
+                            )
+
+                            if (usuario != null) {
+                                firestore.collection("usuarios").document(usuario.uid)
+                                    .update(nuevaUbicacion)
+                            }
                         }
                     }
 
                     updateUI(loc)
+
+
                 }
             }
         }
