@@ -1,4 +1,3 @@
-// LoginActivity.kt actualizado: carga foto desde URI local en archivos
 package com.example.taller3.Auth
 
 import android.content.Intent
@@ -18,9 +17,11 @@ import androidx.core.widget.addTextChangedListener
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.taller3.Mapas.DisponibleActivity
 import com.example.taller3.MenuAccountActivity
 import com.example.taller3.R
 import com.example.taller3.databinding.ActivityLoginBinding
+import com.example.taller3.Mapas.LocationsActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
@@ -41,7 +42,7 @@ class LoginActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
 
         if (auth.currentUser != null) {
-            startActivity(Intent(this, MenuAccountActivity::class.java).apply {
+            startActivity(Intent(this, LocationsActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             })
             return
@@ -96,7 +97,7 @@ class LoginActivity : AppCompatActivity() {
                                 prefs.edit().putString("usuario_$email", userData.entries.joinToString(";") { "${it.key}=${it.value}" }).apply()
 
                                 Toast.makeText(this, "¡Bienvenido!", Toast.LENGTH_SHORT).show()
-                                startActivity(Intent(this, MenuAccountActivity::class.java).apply {
+                                startActivity(Intent(this, LocationsActivity::class.java).apply {
                                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                                 })
                             } else {
