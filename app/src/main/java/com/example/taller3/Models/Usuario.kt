@@ -8,5 +8,5 @@ data class Usuario(
     val id: String = "",
     val fotoPerfilUrl: String = "",
     val latitud: Double = 0.0,
-    val longitud: Double = 0.0
+    val longitud: Double = 0.0,
 )

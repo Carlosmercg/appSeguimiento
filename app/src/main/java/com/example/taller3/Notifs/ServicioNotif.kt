@@ -34,11 +34,10 @@ class ServicioNotif : Service(){
 
 
     //------------------------------ acceso firebase ---------------------------------
-    // que tenemos que  hacer? -> revisar base de datos para ver si "disponible" es true
-    // si lo es se notifica a los usuarios que tal persona esta disponible
-    // al darle click a la notif se debe abrir el mapa de seguimiento del usuario que está disponible
+    // que tenemos que  hacer? ->
+    // si lo es se notifica a los usuarios que tal persona esta disponible o no
     // que implica? estar "escuchando" la base de datos o escuchar cuando se presiona el boton de "disponible"
-    // si al presionar el boton de "disponible" el estado del usuario cambia a "true" se notifica, si cambia a false o si ya esta en false no pasa nada
+    // si al presionar el boton de "disponible" el estado del usuario cambia a "true" se notifica, si esta en "true" igual, si se cambia a false se debe notificar que el usuario ya no esta disponible
 
 
     // ----------------------------- notificaciones metodos ----------------------------------
@@ -56,12 +55,15 @@ class ServicioNotif : Service(){
     }
 
     fun buildNotification(title: String, message: String, icon: Int, target: Class<*>) : Notification {
-        val builder = NotificationCompat.Builder(this, "Test")
+        val builder = NotificationCompat.Builder(this, "Usuario Disponible")
         builder.setSmallIcon(icon)
         builder.setContentTitle(title);
-        builder.setContentText(message);builder.setPriority(NotificationCompat.PRIORITY_DEFAULT);
+        builder.setContentText(message);
+        builder.setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
         val intent = Intent(this, target)
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
         builder.setContentIntent(pendingIntent)
         builder.setAutoCancel(true)
