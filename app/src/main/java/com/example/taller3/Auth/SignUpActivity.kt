@@ -7,6 +7,7 @@ import android.location.Location
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.util.Patterns
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
@@ -14,12 +15,16 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import com.example.taller3.BuildConfig
+import com.example.taller3.ManejadorImagenes
 import com.example.taller3.Models.Usuario
 import com.example.taller3.databinding.ActivitySignUpBinding
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import okhttp3.internal.wait
+import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
 
@@ -34,6 +39,7 @@ class SignUpActivity : AppCompatActivity() {
     private var longitud: Double = 0.0
 
     private var uriImagenPerfil: Uri? = null
+    private lateinit var urlImagenPerfil: String
     private var archivoImagen: File? = null
 
     private lateinit var launcherGaleria: ActivityResultLauncher<String>
@@ -99,27 +105,41 @@ class SignUpActivity : AppCompatActivity() {
 
             auth.createUserWithEmailAndPassword(usuario.email, usuario.password)
                 .addOnSuccessListener {
-                    val uid = auth.currentUser!!.uid
-                    val usuarioFinal = Usuario(
-                        nombre = usuario.nombre,
-                        apellido = usuario.apellido,
-                        email = usuario.email,
-                        password = usuario.password,
-                        id = uid,
-                        fotoPerfilUrl = uriImagenPerfil.toString(),
-                        latitud = latitud,
-                        longitud = longitud,
-                        disponible = true
-                    )
 
-                    db.collection("usuarios").document(uid).set(usuarioFinal)
-                        .addOnSuccessListener {
-                            Toast.makeText(this, "Cuenta creada 🎉", Toast.LENGTH_SHORT).show()
-                            finish()
+                    ManejadorImagenes.subirImagen(baseContext, BuildConfig.IMG_API_KEY, uriImagenPerfil!!) { success, message ->
+                        if (success) {
+
+                            urlImagenPerfil = message ?: ""
+                            Log.i("subirImagen", urlImagenPerfil)
+
+                            val uid = auth.currentUser!!.uid
+                            val usuarioFinal = Usuario(
+                                nombre = usuario.nombre,
+                                apellido = usuario.apellido,
+                                email = usuario.email,
+                                password = usuario.password,
+                                id = uid,
+                                fotoPerfilUrl = urlImagenPerfil,
+                                latitud = latitud,
+                                longitud = longitud,
+                                disponible = true
+                            )
+
+                            db.collection("usuarios").document(uid).set(usuarioFinal)
+                                .addOnSuccessListener {
+                                    Toast.makeText(this, "Cuenta creada 🎉", Toast.LENGTH_SHORT).show()
+                                    finish()
+                                }
+                                .addOnFailureListener {
+                                    Toast.makeText(this, "Error en Firestore", Toast.LENGTH_SHORT).show()
+                                }
+
+                        } else {
+                            Log.i("subirImagen", message.toString())
                         }
-                        .addOnFailureListener {
-                            Toast.makeText(this, "Error en Firestore", Toast.LENGTH_SHORT).show()
-                        }
+                    }
+
+
                 }
                 .addOnFailureListener {
                     Toast.makeText(this, "Error al registrar", Toast.LENGTH_SHORT).show()

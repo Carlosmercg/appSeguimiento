@@ -127,7 +127,7 @@ class DisponibleActivity : AppCompatActivity() {
         map.setTileSource(TileSourceFactory.MAPNIK)
         map.setMultiTouchControls(true)
 
-        userID = intent.getStringExtra("userID").toString()
+        userID = intent.getStringExtra("usuarioID").toString()
 
     }
 
