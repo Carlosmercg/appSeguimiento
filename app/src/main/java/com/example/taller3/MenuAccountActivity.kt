@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
 import com.example.taller3.Auth.LoginActivity
+import com.example.taller3.Notifs.ServicioNotif
 import com.example.taller3.databinding.ActivityMenuAccountBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -45,9 +46,30 @@ class MenuAccountActivity : AppCompatActivity() {
         binding.btnVerUsuariosDisponibles.setOnClickListener {
             startActivity(Intent(this, UsuariosDisponiblesActivity::class.java))
         }
+
+        binding.btnDisponible.setOnClickListener {
+            val nuevoEstado = !binding.btnDisponible.isSelected
+
+            val uid = auth.currentUser?.uid ?: return@setOnClickListener
+            db.collection("usuarios")
+                .document(uid)
+                .update("disponible", nuevoEstado)
+                .addOnSuccessListener {
+
+                    binding.btnDisponible.isSelected = nuevoEstado
+                    binding.btnDisponible.text =
+                        if (nuevoEstado) "Disponible" else "No disponible"
+                    Toast.makeText(this, if (nuevoEstado) "Ahora estás disponible" else "Ya no estás disponible", Toast.LENGTH_SHORT).show()
+                }
+                .addOnFailureListener {
+                    Toast.makeText(this, "Error al cambiar disponibilidad", Toast.LENGTH_SHORT).show()
+                }
+        }
+
+        startService(Intent(this, ServicioNotif::class.java))
     }
 
-    private fun cargarDatosUsuario(uid : String) {
+    fun cargarDatosUsuario(uid: String) {
         db.collection("usuarios").document(uid).get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
@@ -67,11 +89,16 @@ class MenuAccountActivity : AppCompatActivity() {
                         .placeholder(R.drawable.ic_launcher_foreground)
                         .into(binding.imgPerfil)
                 } else {
-                    Toast.makeText(this, "Documento de usuario no encontrado", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this,
+                        "Documento de usuario no encontrado",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
             .addOnFailureListener {
-                Toast.makeText(this, "Error al cargar datos del usuario", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Error al cargar datos del usuario", Toast.LENGTH_LONG)
+                    .show()
                 Log.e("MenuAccount", "Firestore error: ", it)
             }
     }
