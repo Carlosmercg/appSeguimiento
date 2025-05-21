@@ -169,7 +169,6 @@ class DisponibleActivity : AppCompatActivity() {
                 if (loc != null) {
 
                     val newPosition = GeoPoint(loc.latitude, loc.longitude)
-                    posicionFirestore()
 
                     if (firstLocationUpdate) {
                         posicion = newPosition
@@ -194,7 +193,7 @@ class DisponibleActivity : AppCompatActivity() {
                         if(!newPosition.equals(posicion)){
                             posicion = newPosition
                             addLocationMarker()
-                            map.controller.setZoom(18.0)
+                            map.controller.setZoom(16.0)
                             map.controller.animateTo(posicion)
                             val firestore = FirebaseFirestore.getInstance()
                             val usuario = Firebase.auth.currentUser
@@ -241,7 +240,7 @@ class DisponibleActivity : AppCompatActivity() {
             map.overlays.remove(marcador)
         }
 
-        val marcador = createMarker(
+        marcador = createMarker(
             p, snippet, "Posicion de Usuario Disponible",
             R.drawable.baseline_arrow_drop_down_24
         )
