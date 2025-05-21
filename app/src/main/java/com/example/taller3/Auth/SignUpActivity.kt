@@ -108,7 +108,8 @@ class SignUpActivity : AppCompatActivity() {
                         id = uid,
                         fotoPerfilUrl = uriImagenPerfil.toString(),
                         latitud = latitud,
-                        longitud = longitud
+                        longitud = longitud,
+                        disponible = true
                     )
 
                     db.collection("usuarios").document(uid).set(usuarioFinal)

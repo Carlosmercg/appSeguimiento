@@ -10,14 +10,18 @@ import android.location.Location
 import android.os.Bundle
 import android.os.Looper
 import android.util.Log
-import androidx.activity.result.ActivityResultCallback
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.activity.result.ActivityResultCallback
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.taller3.MenuAccountActivity
 import com.example.taller3.R
+import com.example.taller3.databinding.ActivityDisponibleBinding
 import com.example.taller3.databinding.ActivityLocationsBinding
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -35,29 +39,33 @@ import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.json.JSONObject
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.TilesOverlay
-import java.io.InputStream
-import java.util.Date
 
-class LocationsActivity : AppCompatActivity() {
+class DisponibleActivity : AppCompatActivity() {
 
-    lateinit var binding: ActivityLocationsBinding
+    lateinit var binding: ActivityDisponibleBinding
     lateinit var map : MapView
 
+    private lateinit var userID : String
     private lateinit var posicion: GeoPoint
+    private lateinit var posicion2: GeoPoint
     private var currentLocationMarker: Marker? = null
     private lateinit var geocoder: Geocoder
+    private var ultimaPosicion: GeoPoint? = null
+    private var marcador: Marker? = null
+
+    val RADIUS_OF_EARTH_KM = 6378
 
     private lateinit var locationClient: FusedLocationProviderClient
     private lateinit var locationRequest: com.google.android.gms.location.LocationRequest
     private lateinit var locationCallback: LocationCallback
     private var firstLocationUpdate = true
+
 
     /**
      * Callback para cuando se activa la ubicación del dispositivo (GPS).
@@ -94,6 +102,7 @@ class LocationsActivity : AppCompatActivity() {
             overlayManager.
             tilesOverlay.setColorFilter(TilesOverlay.INVERT_COLORS)
         }
+
     }
 
     override fun onPause() {
@@ -104,7 +113,7 @@ class LocationsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityLocationsBinding.inflate(layoutInflater)
+        binding = ActivityDisponibleBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         // Inicializa servicios de ubicación
@@ -120,11 +129,7 @@ class LocationsActivity : AppCompatActivity() {
         map.setTileSource(TileSourceFactory.MAPNIK)
         map.setMultiTouchControls(true)
 
-        loadMarkersFromJson("locations.json")
-
-        binding.menu.setOnClickListener{
-            startActivity(Intent(this, MenuAccountActivity::class.java))
-        }
+        userID = intent.getStringExtra("usuarioID").toString()
 
     }
 
@@ -169,12 +174,19 @@ class LocationsActivity : AppCompatActivity() {
                 if (loc != null) {
 
                     val newPosition = GeoPoint(loc.latitude, loc.longitude)
+                    posicionFirestore()
 
                     if (firstLocationUpdate) {
                         posicion = newPosition
                         addLocationMarker()
-                        map.controller.setZoom(18.0)
+                        map.controller.setZoom(14.0)
                         map.controller.animateTo(posicion)
+
+                        if (::posicion.isInitialized && ::posicion2.isInitialized){
+                            val distancia= distance(posicion.latitude,posicion.longitude,posicion2.latitude,posicion2.longitude)
+                            binding.distancia.text = "Distancia: %.2f Km".format(distancia)
+                        }
+
                         val firestore = FirebaseFirestore.getInstance()
                         val usuario = Firebase.auth.currentUser
 
@@ -193,8 +205,14 @@ class LocationsActivity : AppCompatActivity() {
                         if(!newPosition.equals(posicion)){
                             posicion = newPosition
                             addLocationMarker()
-                            map.controller.setZoom(18.0)
+                            map.controller.setZoom(14.0)
                             map.controller.animateTo(posicion)
+
+                            if (::posicion.isInitialized && ::posicion2.isInitialized){
+                                val distancia= distance(posicion.latitude,posicion.longitude,posicion2.latitude,posicion2.longitude)
+                                binding.distancia.text = "Distancia: %.2f Km".format(distancia)
+                            }
+
                             val firestore = FirebaseFirestore.getInstance()
                             val usuario = Firebase.auth.currentUser
 
@@ -202,6 +220,7 @@ class LocationsActivity : AppCompatActivity() {
                                 "latitud" to newPosition.latitude,
                                 "longitud" to newPosition.longitude
                             )
+
 
                             if (usuario != null) {
                                 firestore.collection("usuarios").document(usuario.uid)
@@ -236,12 +255,16 @@ class LocationsActivity : AppCompatActivity() {
 
     fun addMarker(p: GeoPoint, snippet: String) {
 
-        val marker = createMarker(
-            p, snippet, "Punto de Interes",
+        if (marcador != null) {
+            map.overlays.remove(marcador)
+        }
+
+        marcador = createMarker(
+            p, snippet, "Posicion de Usuario Disponible",
             R.drawable.baseline_arrow_drop_down_24
         )
-        if (marker != null) {
-            map.overlays.add(marker)
+        if (marcador != null) {
+            map.overlays.add(marcador)
             map.invalidate()
         }
     }
@@ -271,7 +294,7 @@ class LocationsActivity : AppCompatActivity() {
         currentLocationMarker = marker
     }
 
-    fun createMarker(p:GeoPoint, title: String, desc: String, iconID : Int) : Marker? {
+    fun createMarker(p: GeoPoint, title: String, desc: String, iconID : Int) : Marker? {
         var marker : Marker? = null;
         if(map!=null) {
             marker = Marker(map);
@@ -290,33 +313,51 @@ class LocationsActivity : AppCompatActivity() {
         return marker
     }
 
-    fun loadJSON(context: Context, fileName: String): String? {
-        return try {
-            val inputStream: InputStream = context.assets.open(fileName)
-            val size = inputStream.available()
-            val buffer = ByteArray(size)
-            inputStream.read(buffer)
-            inputStream.close()
-            String(buffer, Charsets.UTF_8)
-        } catch (ex: Exception) {
-            ex.printStackTrace()
-            null
-        }
+    fun distance(lat1 : Double, long1: Double, lat2:Double, long2:Double) : Double{
+        val latDistance = Math.toRadians(lat1 - lat2)
+        val lngDistance = Math.toRadians(long1 - long2)
+        val a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)+ 	Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * 	Math.sin(lngDistance / 2) * Math.sin(lngDistance / 2)
+        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+        val result = RADIUS_OF_EARTH_KM * c
+        return Math.round(result*100.0)/100.0
     }
 
-    fun loadMarkersFromJson(fileName: String) {
-        val json = loadJSON(this, fileName) ?: return
-        val jsonObject = JSONObject(json)
-        val locationsArray = jsonObject.getJSONArray("locationsArray")
+    fun posicionFirestore() {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("usuarios")
+            .whereEqualTo("id", userID)
+            .get()
+            .addOnSuccessListener { result ->
+                for (document in result) {
+                    val lat = document.getDouble("latitud")
+                    val lng = document.getDouble("longitud")
+                    val nombre = document.getString("nombre") ?: "Desconocido"
 
-        for (i in 0 until locationsArray.length()) {
-            val location = locationsArray.getJSONObject(i)
-            val lat = location.getDouble("latitude")
-            val lon = location.getDouble("longitude")
-            val name = location.getString("name")
-            val point = GeoPoint(lat, lon)
-            addMarker(point, name)
-        }
+                    if (lat != null && lng != null) {
+
+                        posicion2 = GeoPoint(lat, lng)
+
+                        if (ultimaPosicion == null || ultimaPosicion != posicion2){
+                            marcador?.let {
+                                map.overlays.remove(it)
+                            }
+                            addMarker(posicion2, "Usuario $nombre")
+                            ultimaPosicion=posicion2
+
+                            if (::posicion.isInitialized && ::posicion2.isInitialized){
+                                val distancia= distance(posicion.latitude,posicion.longitude,posicion2.latitude,posicion2.longitude)
+                                binding.distancia.text = "Distancia: %.2f Km".format(distancia)
+                            }
+                        }
+                    } else {
+                        Log.w("Firestore", "Coordenadas de Usuario disponible faltantes en documento ${document.id}")
+                    }
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.e("Firestore", "Error al leer usuarios", exception)
+            }
     }
+
 
 }
