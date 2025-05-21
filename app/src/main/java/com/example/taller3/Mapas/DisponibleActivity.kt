@@ -59,6 +59,8 @@ class DisponibleActivity : AppCompatActivity() {
     private var ultimaPosicion: GeoPoint? = null
     private var marcador: Marker? = null
 
+    val RADIUS_OF_EARTH_KM = 6378
+
     private lateinit var locationClient: FusedLocationProviderClient
     private lateinit var locationRequest: com.google.android.gms.location.LocationRequest
     private lateinit var locationCallback: LocationCallback
@@ -100,7 +102,7 @@ class DisponibleActivity : AppCompatActivity() {
             overlayManager.
             tilesOverlay.setColorFilter(TilesOverlay.INVERT_COLORS)
         }
-        posicionFirestore()
+
     }
 
     override fun onPause() {
@@ -127,7 +129,7 @@ class DisponibleActivity : AppCompatActivity() {
         map.setTileSource(TileSourceFactory.MAPNIK)
         map.setMultiTouchControls(true)
 
-        userID = intent.getStringExtra("userID").toString()
+        userID = intent.getStringExtra("usuarioID").toString()
 
     }
 
@@ -172,12 +174,19 @@ class DisponibleActivity : AppCompatActivity() {
                 if (loc != null) {
 
                     val newPosition = GeoPoint(loc.latitude, loc.longitude)
+                    posicionFirestore()
 
                     if (firstLocationUpdate) {
                         posicion = newPosition
                         addLocationMarker()
                         map.controller.setZoom(16.0)
                         map.controller.animateTo(posicion)
+
+                        if (::posicion.isInitialized && ::posicion2.isInitialized){
+                            val distancia= distance(posicion.latitude,posicion.longitude,posicion2.latitude,posicion2.longitude)
+                            binding.distancia.text = "Distancia: %.2f Km".format(distancia)
+                        }
+
                         val firestore = FirebaseFirestore.getInstance()
                         val usuario = Firebase.auth.currentUser
 
@@ -198,6 +207,12 @@ class DisponibleActivity : AppCompatActivity() {
                             addLocationMarker()
                             map.controller.setZoom(16.0)
                             map.controller.animateTo(posicion)
+
+                            if (::posicion.isInitialized && ::posicion2.isInitialized){
+                                val distancia= distance(posicion.latitude,posicion.longitude,posicion2.latitude,posicion2.longitude)
+                                binding.distancia.text = "Distancia: %.2f Km".format(distancia)
+                            }
+
                             val firestore = FirebaseFirestore.getInstance()
                             val usuario = Firebase.auth.currentUser
 
@@ -205,6 +220,7 @@ class DisponibleActivity : AppCompatActivity() {
                                 "latitud" to newPosition.latitude,
                                 "longitud" to newPosition.longitude
                             )
+
 
                             if (usuario != null) {
                                 firestore.collection("usuarios").document(usuario.uid)
@@ -297,6 +313,15 @@ class DisponibleActivity : AppCompatActivity() {
         return marker
     }
 
+    fun distance(lat1 : Double, long1: Double, lat2:Double, long2:Double) : Double{
+        val latDistance = Math.toRadians(lat1 - lat2)
+        val lngDistance = Math.toRadians(long1 - long2)
+        val a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)+ 	Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * 	Math.sin(lngDistance / 2) * Math.sin(lngDistance / 2)
+        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+        val result = RADIUS_OF_EARTH_KM * c
+        return Math.round(result*100.0)/100.0
+    }
+
     fun posicionFirestore() {
         val db = FirebaseFirestore.getInstance()
         db.collection("usuarios")
@@ -317,10 +342,15 @@ class DisponibleActivity : AppCompatActivity() {
                                 map.overlays.remove(it)
                             }
                             addMarker(posicion2, "Usuario $nombre")
-                            map.controller.setZoom(18.0)
+                            map.controller.setZoom(16.0)
                             map.controller.animateTo(posicion2)
                             map.invalidate()
                             ultimaPosicion=posicion2
+
+                            if (::posicion.isInitialized && ::posicion2.isInitialized){
+                                val distancia= distance(posicion.latitude,posicion.longitude,posicion2.latitude,posicion2.longitude)
+                                binding.distancia.text = "Distancia: %.2f Km".format(distancia)
+                            }
                         }
                     } else {
                         Log.w("Firestore", "Coordenadas de Usuario disponible faltantes en documento ${document.id}")
@@ -331,4 +361,6 @@ class DisponibleActivity : AppCompatActivity() {
                 Log.e("Firestore", "Error al leer usuarios", exception)
             }
     }
+
+
 }
