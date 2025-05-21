@@ -39,6 +39,7 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+
         auth = FirebaseAuth.getInstance()
 
         if (auth.currentUser != null) {
