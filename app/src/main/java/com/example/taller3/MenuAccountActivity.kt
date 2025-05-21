@@ -84,10 +84,7 @@ class MenuAccountActivity : AppCompatActivity() {
                     binding.txtCorreo.text = correo
                     binding.txtUbicacion.text = "Ubicación: $lat, $lng"
 
-                    Glide.with(this)
-                        .load(fotoUrl)
-                        .placeholder(R.drawable.ic_launcher_foreground)
-                        .into(binding.imgPerfil)
+                    ManejadorImagenes.mostrarImagenDesdeUrl(fotoUrl, binding.imgPerfil, this)
                 } else {
                     Toast.makeText(
                         this,

@@ -3,6 +3,8 @@ package com.example.taller3
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.widget.ImageView
+import com.bumptech.glide.Glide
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -12,6 +14,13 @@ import java.util.concurrent.TimeUnit
 
 object ManejadorImagenes {
 
+    fun mostrarImagenDesdeUrl(url: String, imageView: ImageView, context: Context) {
+        Glide.with(context)
+            .load(url)
+            .placeholder(R.drawable.ic_profile) // Mientras carga
+            .error(R.drawable.ic_profile)       // Si hay error
+            .into(imageView)
+    }
 
     fun subirImagen(
         context: Context,

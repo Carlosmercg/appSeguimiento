@@ -29,11 +29,7 @@ class UsuarioDisponibleAdapter(
         fun bind(usuario : Usuario) {
             binding.txtNombre.text  = usuario.nombre
 
-            // Cargar imagen desde URL remota
-            Glide.with(binding.root.context)
-                .load(usuario.fotoPerfilUrl)
-                .into(binding.imgUsuario)
-
+            ManejadorImagenes.mostrarImagenDesdeUrl(usuario.fotoPerfilUrl, binding.imgPerfil, binding.root.context)
             // Evento de clic
             binding.ubicacion.setOnClickListener { onItemClick(usuario) }
         }

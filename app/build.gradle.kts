@@ -75,6 +75,8 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-storage-ktx")
     implementation("com.squareup.okhttp3:okhttp")
+    implementation("com.github.bumptech.glide:glide")
+    annotationProcessor("com.github.bumptech.glide:compiler")
 
     // Google Play Services
     implementation("com.google.android.gms:play-services-maps:18.2.0")
