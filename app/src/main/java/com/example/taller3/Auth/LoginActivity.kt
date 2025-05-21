@@ -48,26 +48,6 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
 
-        notifPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-            if (!isGranted) {
-                if (!shouldShowRequestPermissionRationale(
-                        Manifest.permission.POST_NOTIFICATIONS)) {
-                    Toast.makeText(this, "Necesitamos notificaciones para mostrar cambios en usuarios", Toast.LENGTH_LONG).show()
-                    notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                } else {
-                    Toast.makeText(this, "Sin permiso, no verás cambios en la lista de usuarios", Toast.LENGTH_LONG).show()
-                }
-            }
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this,Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_DENIED) {
-                if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
-                    Toast.makeText(this, "Necesitamos notificaciones para mostrar cambios en usuarios", Toast.LENGTH_LONG).show()
-                }
-                notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            }
-        }
-
         auth = FirebaseAuth.getInstance()
 
         if (auth.currentUser != null) {
@@ -79,6 +59,24 @@ class LoginActivity : AppCompatActivity() {
 
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        notifPermissionLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted ->
+            if (!isGranted) {
+                if (!shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
+                    Toast.makeText(this, "Necesitamos notificaciones para mostrar cambios en usuarios", Toast.LENGTH_LONG).show()
+                    notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                } else {
+                    Toast.makeText(this, "Sin permiso, no verás cambios en la lista de usuarios", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_DENIED) {
+                notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
 
         binding.btnLogin.isEnabled = false
 
