@@ -9,6 +9,18 @@
     android:background="@color/white"
     tools:context=".MenuAccountActivity">
 
+    <Button
+        android:id="@+id/btnVerUsuariosDisponibles"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:backgroundTint="@color/design_default_color_error"
+        android:text="Ver Usuarios Disponibles"
+        android:textColor="@android:color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/txtUbicacion" />
+
     <ImageView
         android:id="@+id/imgPerfil"
         android:layout_width="120dp"
@@ -61,12 +73,13 @@
         android:id="@+id/btnCerrarSesion"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="15dp"
+        android:backgroundTint="@color/design_default_color_error"
         android:text="Cerrar Sesión"
         android:textColor="@android:color/white"
-        android:backgroundTint="@color/design_default_color_error"
-        app:layout_constraintTop_toBottomOf="@id/txtUbicacion"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="32dp"/>
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnVerUsuariosDisponibles" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
