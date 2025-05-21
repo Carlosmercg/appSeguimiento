@@ -109,7 +109,8 @@ class SignUpActivity : AppCompatActivity() {
                     ManejadorImagenes.subirImagen(baseContext, BuildConfig.IMG_API_KEY, uriImagenPerfil!!) { success, message ->
                         if (success) {
 
-                            urlImagenPerfil = message ?: ""
+                            val url = JSONObject(message).getJSONObject("data").getString("url")
+                            urlImagenPerfil = url
                             Log.i("subirImagen", urlImagenPerfil)
 
                             val uid = auth.currentUser!!.uid
@@ -122,7 +123,7 @@ class SignUpActivity : AppCompatActivity() {
                                 fotoPerfilUrl = urlImagenPerfil,
                                 latitud = latitud,
                                 longitud = longitud,
-                                disponible = true
+                                disponible = false
                             )
 
                             db.collection("usuarios").document(uid).set(usuarioFinal)
