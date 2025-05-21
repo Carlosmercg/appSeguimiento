@@ -96,14 +96,14 @@ class SignUpActivity : AppCompatActivity() {
         }
 
         binding.btnSignUp.setOnClickListener {
-            val usuario = recolectarDatos() ?: return@setOnClickListener
+            val datos = recolectarDatos() ?: return@setOnClickListener
 
             if (uriImagenPerfil == null) {
                 Toast.makeText(this, "Debes subir una imagen", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            auth.createUserWithEmailAndPassword(usuario.email, usuario.password)
+            auth.createUserWithEmailAndPassword(datos.first.email, datos.second)
                 .addOnSuccessListener {
 
                     ManejadorImagenes.subirImagen(baseContext, BuildConfig.IMG_API_KEY, uriImagenPerfil!!) { success, message ->
@@ -115,10 +115,9 @@ class SignUpActivity : AppCompatActivity() {
 
                             val uid = auth.currentUser!!.uid
                             val usuarioFinal = Usuario(
-                                nombre = usuario.nombre,
-                                apellido = usuario.apellido,
-                                email = usuario.email,
-                                password = usuario.password,
+                                nombre = datos.first.nombre,
+                                apellido = datos.first.apellido,
+                                email = datos.first.email,
                                 id = uid,
                                 fotoPerfilUrl = urlImagenPerfil,
                                 latitud = latitud,
@@ -221,7 +220,7 @@ class SignUpActivity : AppCompatActivity() {
         }
     }
 
-    private fun recolectarDatos(): Usuario? {
+    private fun recolectarDatos(): Pair<Usuario, String>? {
         val nombre = binding.etNombre.text.toString().trim()
         val apellido = binding.etApellido.text.toString().trim()
         val email = binding.etEmail.text.toString().trim()
@@ -241,7 +240,7 @@ class SignUpActivity : AppCompatActivity() {
             password.length < 6 || password != confirmar -> {
                 Toast.makeText(this, "Contraseña inválida o no coinciden", Toast.LENGTH_SHORT).show(); null
             }
-            else -> Usuario(nombre, apellido, email, password)
+            else -> Pair(Usuario(nombre, apellido, email),password)
         }
     }
 
