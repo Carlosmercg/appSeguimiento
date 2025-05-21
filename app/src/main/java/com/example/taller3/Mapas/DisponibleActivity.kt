@@ -179,7 +179,7 @@ class DisponibleActivity : AppCompatActivity() {
                     if (firstLocationUpdate) {
                         posicion = newPosition
                         addLocationMarker()
-                        map.controller.setZoom(16.0)
+                        map.controller.setZoom(14.0)
                         map.controller.animateTo(posicion)
 
                         if (::posicion.isInitialized && ::posicion2.isInitialized){
@@ -205,7 +205,7 @@ class DisponibleActivity : AppCompatActivity() {
                         if(!newPosition.equals(posicion)){
                             posicion = newPosition
                             addLocationMarker()
-                            map.controller.setZoom(16.0)
+                            map.controller.setZoom(14.0)
                             map.controller.animateTo(posicion)
 
                             if (::posicion.isInitialized && ::posicion2.isInitialized){
@@ -342,9 +342,6 @@ class DisponibleActivity : AppCompatActivity() {
                                 map.overlays.remove(it)
                             }
                             addMarker(posicion2, "Usuario $nombre")
-                            map.controller.setZoom(16.0)
-                            map.controller.animateTo(posicion2)
-                            map.invalidate()
                             ultimaPosicion=posicion2
 
                             if (::posicion.isInitialized && ::posicion2.isInitialized){
