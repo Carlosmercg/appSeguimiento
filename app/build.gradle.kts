@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -8,6 +10,15 @@ android {
     namespace = "com.example.taller3"
     compileSdk = 35
 
+    val localProperties = Properties().apply {
+        val file = rootProject.file("local.properties")
+        if (file.exists()) {
+            load(file.inputStream())
+        }
+    }
+    val imgApiKey = localProperties["IMG_API_KEY"] as String? ?: "\"MISSING_KEY\""
+
+
     defaultConfig {
         applicationId = "com.example.taller3"
         minSdk = 24
@@ -15,6 +26,9 @@ android {
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "IMG_API_KEY", "\"$imgApiKey\"")
+
     }
 
     buildTypes {
@@ -60,6 +74,7 @@ dependencies {
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-storage-ktx")
+    implementation("com.squareup.okhttp3:okhttp")
 
     // Google Play Services
     implementation("com.google.android.gms:play-services-maps:18.2.0")
