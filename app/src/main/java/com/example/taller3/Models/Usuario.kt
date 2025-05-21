@@ -9,4 +9,5 @@ data class Usuario(
     val fotoPerfilUrl: String = "",
     val latitud: Double = 0.0,
     val longitud: Double = 0.0,
+    val disponible: Boolean = false
 )
