@@ -51,6 +51,7 @@ class DisponibleActivity : AppCompatActivity() {
     lateinit var binding: ActivityDisponibleBinding
     lateinit var map : MapView
 
+    private lateinit var userID : String
     private lateinit var posicion: GeoPoint
     private lateinit var posicion2: GeoPoint
     private var currentLocationMarker: Marker? = null
@@ -125,6 +126,8 @@ class DisponibleActivity : AppCompatActivity() {
         map = binding.osmMap
         map.setTileSource(TileSourceFactory.MAPNIK)
         map.setMultiTouchControls(true)
+
+        userID = intent.getStringExtra("userID").toString()
 
     }
 
@@ -298,7 +301,7 @@ class DisponibleActivity : AppCompatActivity() {
     fun posicionFirestore() {
         val db = FirebaseFirestore.getInstance()
         db.collection("usuarios")
-            .whereEqualTo("id", "YtVlSQEoujeBQDq4iNUwN8RdcAw2")
+            .whereEqualTo("id", userID)
             .get()
             .addOnSuccessListener { result ->
                 for (document in result) {

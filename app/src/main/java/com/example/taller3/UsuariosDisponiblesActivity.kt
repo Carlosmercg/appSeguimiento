@@ -4,12 +4,9 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.taller3.Mapas.LocationsActivity
+import com.example.taller3.Mapas.DisponibleActivity
 import com.example.taller3.Models.Usuario
 import com.example.taller3.adapters.UsuarioDisponibleAdapter
 import com.example.taller3.databinding.ActivityUsuariosDisponiblesBinding
@@ -29,7 +26,8 @@ class UsuariosDisponiblesActivity : AppCompatActivity() {
         cargarUsuariosDisponibles()
 
         adapter = UsuarioDisponibleAdapter(usuarios) { usuario ->
-            Intent(this, LocationsActivity::class.java).apply {
+            Intent(this, DisponibleActivity::class.java).apply {
+                Log.d("UsuariosDisponibles", "Usuario seleccionado: $usuario")
                 putExtra("usuarioID", usuario.id)
             }.also(::startActivity)
         }
@@ -53,6 +51,7 @@ class UsuariosDisponiblesActivity : AppCompatActivity() {
                 for (documento in resultado) {
                     val usuario = documento.toObject(Usuario::class.java)
                     usuarios.add(usuario)
+                    //Log.d("UsuariosDisponibles", "Usuario agregado: $usuario")
                 }
                 adapter.notifyDataSetChanged()
             }
