@@ -60,6 +60,8 @@ dependencies {
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-storage-ktx")
+    implementation("com.google.firebase:firebase-inappmessaging-display")
+    implementation("com.google.firebase:firebase-analytics")
 
     // Google Play Services
     implementation("com.google.android.gms:play-services-maps:18.2.0")
@@ -86,4 +88,8 @@ dependencies {
     implementation("org.osmdroid:osmdroid-android:6.1.18")
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("com.github.MKergall:osmbonuspack:6.8.0")
+
+    implementation("com.google.firebase:firebase-messaging-ktx:24.1.1")
+    implementation ("androidx.work:work-runtime-ktx:2.8.1")
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
 }

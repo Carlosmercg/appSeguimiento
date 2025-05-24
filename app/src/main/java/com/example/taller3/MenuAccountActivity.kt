@@ -1,10 +1,15 @@
 package com.example.taller3
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.bumptech.glide.Glide
 import com.example.taller3.Auth.LoginActivity
 import com.example.taller3.Notifs.ServicioNotif
@@ -17,6 +22,7 @@ class MenuAccountActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMenuAccountBinding
     private val auth by lazy { FirebaseAuth.getInstance() }
     private val db by lazy { FirebaseFirestore.getInstance() }
+    private val REQUEST_NOTIF_PERMISSION = 1001
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,6 +53,25 @@ class MenuAccountActivity : AppCompatActivity() {
             startActivity(Intent(this, UsuariosDisponiblesActivity::class.java))
         }
 
+        if (ContextCompat.checkSelfPermission(
+                this, Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            val servicio = Intent(this, ServicioNotif::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                ContextCompat.startForegroundService(this, servicio)
+            } else {
+                startService(servicio)
+            }
+        } else {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                REQUEST_NOTIF_PERMISSION
+            )
+        }
+
+
         binding.btnDisponible.setOnClickListener {
             val nuevoEstado = !binding.btnDisponible.isSelected
 
@@ -65,8 +90,6 @@ class MenuAccountActivity : AppCompatActivity() {
                     Toast.makeText(this, "Error al cambiar disponibilidad", Toast.LENGTH_SHORT).show()
                 }
         }
-
-        startService(Intent(this, ServicioNotif::class.java))
     }
 
     fun cargarDatosUsuario(uid: String) {
@@ -84,10 +107,7 @@ class MenuAccountActivity : AppCompatActivity() {
                     binding.txtCorreo.text = correo
                     binding.txtUbicacion.text = "Ubicación: $lat, $lng"
 
-                    Glide.with(this)
-                        .load(fotoUrl)
-                        .placeholder(R.drawable.ic_launcher_foreground)
-                        .into(binding.imgPerfil)
+                    ManejadorImagenes.mostrarImagenDesdeUrl(fotoUrl, binding.imgPerfil, this)
                 } else {
                     Toast.makeText(
                         this,
@@ -101,5 +121,27 @@ class MenuAccountActivity : AppCompatActivity() {
                     .show()
                 Log.e("MenuAccount", "Firestore error: ", it)
             }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_NOTIF_PERMISSION
+            && grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED
+        ) {
+            val servicio = Intent(this, ServicioNotif::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                ContextCompat.startForegroundService(this, servicio)
+            } else {
+                startService(servicio)
+            }
+        } else {
+            Toast.makeText(
+                this,
+                "Necesitas habilitar las notificaciones para que el servicio funcione",
+                Toast.LENGTH_LONG
+            ).show()
+        }
     }
 }
