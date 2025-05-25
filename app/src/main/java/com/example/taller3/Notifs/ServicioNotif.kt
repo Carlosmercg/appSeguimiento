@@ -25,10 +25,14 @@ import com.google.firebase.firestore.QuerySnapshot
 
 class ServicioNotif : Service() {
 
-    private val CHANNEL_ID = "UsuarioDisponible"
-    private var notid = 0
+    companion object {
+        private const val CHANNEL_ID = "UsuarioDisponible"
+        private const val FOREGROUND_ID = 1
+        private const val NOTIF_ID_DISPONIBILIDAD = 42
+        private const val EXTRA_USUARIO_ID = "usuarioID"
+    }
+
     private lateinit var bd: FirebaseFirestore
-    private val NOTIF_ID_DISPONIBILIDAD = 42
 
     override fun onCreate() {
         super.onCreate()
@@ -36,74 +40,6 @@ class ServicioNotif : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        createNotificationChannel()
-        val notForeground = buildNotification(
-            "Servicio Activo",
-            "Escuchando ...",
-            R.drawable.ic_launcher_foreground,
-            LoginActivity::class.java
-        )
-        startForeground(1, notForeground)
-
-        bd.collection("usuarios")
-            .addSnapshotListener(object : EventListener<QuerySnapshot> {
-                override fun onEvent(
-                    snapshots: QuerySnapshot?,
-                    error: FirebaseFirestoreException?
-                ) {
-                    if (error != null) {
-                        Log.e("ServicioNotif", "Error al escuchar cambios", error)
-                        return
-                    }
-                    if (snapshots != null) {
-                        for (change in snapshots.documentChanges) {
-                            if (change.type == DocumentChange.Type.MODIFIED) {
-                                val doc = change.document
-                                val nombre = doc.getString("nombre") ?: "Usuario"
-                                val disp = doc.getBoolean("disponible") ?: false
-                                val mensaje: String
-                                if (disp) {
-                                    mensaje = nombre + " está disponible"
-                                } else {
-                                    mensaje = nombre + " ya no está disponible"
-                                }
-
-                                val destinoActivity = if (
-                                    FirebaseAuth.getInstance().currentUser != null
-                                ) {
-                                    DisponibleActivity::class.java
-                                } else {
-                                    LoginActivity::class.java
-                                }
-
-                                val notif = buildNotification(
-                                    "Cambio de disponibilidad",
-                                    mensaje,
-                                    R.drawable.ic_launcher_foreground,
-                                    destinoActivity
-                                )
-                                notid = notid + 1
-                                if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
-                                    == PackageManager.PERMISSION_GRANTED
-                                ) {
-                                    NotificationManagerCompat
-                                        .from(applicationContext)
-                                        .notify(NOTIF_ID_DISPONIBILIDAD, notif)
-                                }
-                            }
-                        }
-                    }
-                }
-            })
-
-        return START_STICKY
-    }
-
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
-    }
-
-    private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val canal = NotificationChannel(
                 CHANNEL_ID,
@@ -114,16 +50,87 @@ class ServicioNotif : Service() {
             val manager = getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(canal)
         }
+
+        val notForeground = buildNotification(
+            "Servicio Activo",
+            "Escuchando cambios de disponibilidad",
+            R.drawable.ic_launcher_foreground,
+            LoginActivity::class.java,
+            null
+        )
+        startForeground(FOREGROUND_ID, notForeground)
+
+        bd.collection("usuarios").addSnapshotListener(object : EventListener<QuerySnapshot> {
+            override fun onEvent(snapshots: QuerySnapshot?, error: FirebaseFirestoreException?) {
+                if (error != null) {
+                    Log.e("ServicioNotif", "Error al escuchar cambios", error)
+                    return
+                }
+                if (snapshots == null) {
+                    return
+                }
+
+                for (change in snapshots.documentChanges) {
+                    if (change.type == DocumentChange.Type.MODIFIED) {
+                        val doc = change.document
+                        val userId = doc.id
+                        val nombre = doc.getString("nombre")
+                        val disponible = doc.getBoolean("disponible")
+
+                        var mensaje = "Usuario cambió su estado"
+                        if (nombre != null && disponible != null) {
+                            if (disponible) {
+                                mensaje = nombre + " está disponible"
+                            } else {
+                                mensaje = nombre + " ya no está disponible"
+                            }
+                        }
+
+                        val destinoClass: Class<*>
+                        if (FirebaseAuth.getInstance().currentUser != null) {
+                            destinoClass = DisponibleActivity::class.java
+                        } else {
+                            destinoClass = LoginActivity::class.java
+                        }
+
+                        val notif = buildNotification(
+                            "Cambio de disponibilidad",
+                            mensaje,
+                            R.drawable.ic_launcher_foreground,
+                            destinoClass,
+                            userId
+                        )
+
+                        if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                            == PackageManager.PERMISSION_GRANTED
+                        ) {
+                            val nm = NotificationManagerCompat.from(applicationContext)
+                            nm.notify(NOTIF_ID_DISPONIBILIDAD, notif)
+                        }
+                    }
+                }
+            }
+        })
+
+        return START_STICKY
+    }
+
+    override fun onBind(intent: Intent?): IBinder? {
+        return null
     }
 
     private fun buildNotification(
         title: String,
         message: String,
         iconRes: Int,
-        target: Class<*>
+        targetClass: Class<*>,
+        usuarioId: String?
     ): Notification {
-        val intent = Intent(this, target)
+        val intent = Intent(this, targetClass)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        if (usuarioId != null) {
+            intent.putExtra(EXTRA_USUARIO_ID, usuarioId)
+        }
 
         val pending = PendingIntent.getActivity(
             this,
@@ -136,7 +143,7 @@ class ServicioNotif : Service() {
         builder.setSmallIcon(iconRes)
         builder.setContentTitle(title)
         builder.setContentText(message)
-        builder.priority = NotificationCompat.PRIORITY_DEFAULT
+        builder.setPriority(NotificationCompat.PRIORITY_DEFAULT)
         builder.setContentIntent(pending)
         builder.setAutoCancel(true)
 
