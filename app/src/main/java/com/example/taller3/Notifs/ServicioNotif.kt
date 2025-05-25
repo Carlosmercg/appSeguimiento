@@ -38,7 +38,7 @@ class ServicioNotif : Service() {
         createNotificationChannel()
         val notForeground = buildNotification(
             "Servicio Activo",
-            "Escuchando cambios de disponibilidad",
+            "Escuchando ...",
             R.drawable.ic_launcher_foreground,
             LoginActivity::class.java
         )
