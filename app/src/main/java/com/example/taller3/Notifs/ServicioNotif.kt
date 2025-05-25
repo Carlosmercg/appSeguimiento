@@ -28,6 +28,7 @@ class ServicioNotif : Service() {
     private val CHANNEL_ID = "UsuarioDisponible"
     private var notid = 0
     private lateinit var bd: FirebaseFirestore
+    private val NOTIF_ID_DISPONIBILIDAD = 42
 
     override fun onCreate() {
         super.onCreate()
@@ -85,8 +86,9 @@ class ServicioNotif : Service() {
                                 if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
                                     == PackageManager.PERMISSION_GRANTED
                                 ) {
-                                    NotificationManagerCompat.from(this@ServicioNotif)
-                                        .notify(notid, notif)
+                                    NotificationManagerCompat
+                                        .from(applicationContext)
+                                        .notify(NOTIF_ID_DISPONIBILIDAD, notif)
                                 }
                             }
                         }
