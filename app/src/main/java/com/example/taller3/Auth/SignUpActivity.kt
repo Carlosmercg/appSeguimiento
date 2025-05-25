@@ -7,6 +7,7 @@ import android.location.Location
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.util.Patterns
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
@@ -14,12 +15,16 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import com.example.taller3.BuildConfig
+import com.example.taller3.ManejadorImagenes
 import com.example.taller3.Models.Usuario
 import com.example.taller3.databinding.ActivitySignUpBinding
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import okhttp3.internal.wait
+import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
 
@@ -34,6 +39,7 @@ class SignUpActivity : AppCompatActivity() {
     private var longitud: Double = 0.0
 
     private var uriImagenPerfil: Uri? = null
+    private lateinit var urlImagenPerfil: String
     private var archivoImagen: File? = null
 
     private lateinit var launcherGaleria: ActivityResultLauncher<String>
@@ -90,31 +96,41 @@ class SignUpActivity : AppCompatActivity() {
         }
 
         binding.btnSignUp.setOnClickListener {
-            val usuario = recolectarDatos() ?: return@setOnClickListener
+            val datos = recolectarDatos() ?: return@setOnClickListener
 
             if (uriImagenPerfil == null) {
                 Toast.makeText(this, "Debes subir una imagen", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            auth.createUserWithEmailAndPassword(usuario.email, usuario.password)
+            auth.createUserWithEmailAndPassword(datos.first.email, datos.second)
                 .addOnSuccessListener {
                     val uid = auth.currentUser!!.uid
-                    val usuarioFinal = Usuario(
-                        nombre = usuario.nombre,
-                        apellido = usuario.apellido,
-                        email = usuario.email,
-                        password = usuario.password,
+                    val usuarioInicial = Usuario(
+                        nombre = datos.first.nombre,
+                        apellido = datos.first.apellido,
+                        email = datos.first.email,
                         id = uid,
-                        fotoPerfilUrl = uriImagenPerfil.toString(),
+                        fotoPerfilUrl = "",
                         latitud = latitud,
                         longitud = longitud,
-                        disponible = true
+                        disponible = false
                     )
 
-                    db.collection("usuarios").document(uid).set(usuarioFinal)
+                    db.collection("usuarios").document(uid).set(usuarioInicial)
                         .addOnSuccessListener {
-                            Toast.makeText(this, "Cuenta creada 🎉", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this, "Cuenta creada, subiendo imagen...", Toast.LENGTH_SHORT).show()
+
+                            ManejadorImagenes.subirImagen(baseContext, BuildConfig.IMG_API_KEY, uriImagenPerfil!!) { success, message ->
+                                if (success) {
+                                    val url = JSONObject(message).getJSONObject("data").getString("url")
+                                    db.collection("usuarios").document(uid)
+                                        .update("fotoPerfilUrl", url)
+                                } else {
+                                    Log.e("subirImagen", "Fallo al subir imagen: $message")
+                                }
+                            }
+
                             finish()
                         }
                         .addOnFailureListener {
@@ -125,6 +141,7 @@ class SignUpActivity : AppCompatActivity() {
                     Toast.makeText(this, "Error al registrar", Toast.LENGTH_SHORT).show()
                 }
         }
+
     }
 
     private fun obtenerUbicacion() {
@@ -200,7 +217,7 @@ class SignUpActivity : AppCompatActivity() {
         }
     }
 
-    private fun recolectarDatos(): Usuario? {
+    private fun recolectarDatos(): Pair<Usuario, String>? {
         val nombre = binding.etNombre.text.toString().trim()
         val apellido = binding.etApellido.text.toString().trim()
         val email = binding.etEmail.text.toString().trim()
@@ -220,7 +237,7 @@ class SignUpActivity : AppCompatActivity() {
             password.length < 6 || password != confirmar -> {
                 Toast.makeText(this, "Contraseña inválida o no coinciden", Toast.LENGTH_SHORT).show(); null
             }
-            else -> Usuario(nombre, apellido, email, password)
+            else -> Pair(Usuario(nombre, apellido, email),password)
         }
     }
 

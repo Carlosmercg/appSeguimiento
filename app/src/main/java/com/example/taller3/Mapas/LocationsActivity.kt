@@ -59,6 +59,9 @@ class LocationsActivity : AppCompatActivity() {
     private lateinit var locationCallback: LocationCallback
     private var firstLocationUpdate = true
 
+    private var askedPermissionAlready = false
+    private var askedToEnableGps = false
+
     /**
      * Callback para cuando se activa la ubicación del dispositivo (GPS).
      */
@@ -85,7 +88,6 @@ class LocationsActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        locationPermission.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
         map.onResume()
 
         val uims = getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
@@ -93,6 +95,12 @@ class LocationsActivity : AppCompatActivity() {
             map.
             overlayManager.
             tilesOverlay.setColorFilter(TilesOverlay.INVERT_COLORS)
+        }
+
+        if (!askedToEnableGps && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+            == PackageManager.PERMISSION_GRANTED) {
+            askedToEnableGps = true
+            locationSettings()
         }
     }
 
@@ -106,6 +114,17 @@ class LocationsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityLocationsBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Solo pedimos permisos si no están concedidos
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            // Solo preguntamos una vez por ejecución si no están concedidos
+            if (!askedPermissionAlready) {
+                locationPermission.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                askedPermissionAlready = true
+            }
+        }
 
         // Inicializa servicios de ubicación
         locationClient = LocationServices.getFusedLocationProviderClient(this)

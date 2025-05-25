@@ -10,6 +10,7 @@ import com.example.taller3.Mapas.DisponibleActivity
 import com.example.taller3.Models.Usuario
 import com.example.taller3.adapters.UsuarioDisponibleAdapter
 import com.example.taller3.databinding.ActivityUsuariosDisponiblesBinding
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 class UsuariosDisponiblesActivity : AppCompatActivity() {
@@ -17,6 +18,7 @@ class UsuariosDisponiblesActivity : AppCompatActivity() {
     private lateinit var binding: ActivityUsuariosDisponiblesBinding
     private lateinit var adapter: UsuarioDisponibleAdapter
     private val usuarios = mutableListOf<Usuario>()
+    private val auth by lazy { FirebaseAuth.getInstance() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,8 +51,10 @@ class UsuariosDisponiblesActivity : AppCompatActivity() {
             .addOnSuccessListener { resultado ->
                 usuarios.clear()
                 for (documento in resultado) {
-                    val usuario = documento.toObject(Usuario::class.java)
-                    usuarios.add(usuario)
+                    if(documento.id != auth.currentUser?.uid) {
+                        val usuario = documento.toObject(Usuario::class.java)
+                        usuarios.add(usuario)
+                    }
                     //Log.d("UsuariosDisponibles", "Usuario agregado: $usuario")
                 }
                 adapter.notifyDataSetChanged()
