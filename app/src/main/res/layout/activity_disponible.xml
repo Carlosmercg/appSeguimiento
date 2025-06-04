@@ -1,46 +1,71 @@
-<?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Mapas.LocationsActivity">
+    android:id="@+id/main">
 
-    <!-- Mapa de fondo ocupando toda la pantalla -->
+    <!-- Banner -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/banner"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@color/design_default_color_error"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+
+    <ImageButton
+            android:id="@+id/back"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="Volver"
+            app:srcCompat="@drawable/baseline_arrow_back_24"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginStart="8dp"/>
+
+        <TextView
+            android:id="@+id/nombreUsuarioBanner"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Nombre del Usuario"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:gravity="center_vertical"
+            app:layout_constraintStart_toEndOf="@id/back"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:paddingStart="8dp"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Mapa -->
     <org.osmdroid.views.MapView
         android:id="@+id/osmMap"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginBottom="50dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/banner"
+        app:layout_constraintBottom_toTopOf="@id/distancia"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="36dp"
-        android:layout_marginTop="9dp"
-        android:text="Distancia"
-        android:textSize="18dp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/osmMap"
-        app:layout_constraintVertical_bias="0.0" />
-
+    <!-- Distancia -->
     <TextView
         android:id="@+id/distancia"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="36dp"
-        android:layout_marginTop="9dp"
-        android:textSize="18dp"
+        android:text="📍 Distancia hasta ti: 0.0 Km"
+        android:textSize="16sp"
         android:textStyle="bold"
-        app:layout_constraintStart_toEndOf="@+id/textView"
-        app:layout_constraintTop_toBottomOf="@+id/osmMap" />
+        android:textColor="@android:color/black"
+        android:gravity="center"
+        android:padding="12dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

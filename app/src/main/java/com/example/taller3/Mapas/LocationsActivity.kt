@@ -152,17 +152,11 @@ class LocationsActivity : AppCompatActivity() {
         val client: SettingsClient = LocationServices.getSettingsClient(this)
         val task: Task<LocationSettingsResponse> = client.checkLocationSettings(builder.build())
         task.addOnSuccessListener { locationSettingsResponse ->
-            // All location settings are satisfied. The client can initialize
-            // location requests here. // ...
             startLocationUpdates()
         }
         task.addOnFailureListener { exception ->
             if (exception is ResolvableApiException){
-                // Location settings are not satisfied, but this can be fixed
-                // by showing the user a dialog.
                 try {
-                    // Show the dialog by calling startResolutionForResult(),
-                    // and check the result in onActivityResult().
                     val isr : IntentSenderRequest = IntentSenderRequest.Builder(exception.resolution).build()
                     locationSettings.launch(isr)
                 } catch (sendEx: IntentSender.SendIntentException) {
