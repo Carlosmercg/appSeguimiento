@@ -2,6 +2,7 @@ package com.example.taller3.Mapas
 
 import android.app.UiModeManager
 import android.content.Context
+import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.location.Geocoder
@@ -15,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.taller3.MenuAccountActivity
 import com.example.taller3.R
 import com.example.taller3.databinding.ActivityDisponibleBinding
 import com.google.android.gms.common.api.ResolvableApiException
@@ -52,6 +54,10 @@ class DisponibleActivity : AppCompatActivity() {
     private lateinit var locationCallback: LocationCallback
     private var askedPermissionAlready = false
     private var askedToEnableGps = false
+
+    private var primeraAjustada = false
+    private var ultimaCaja: BoundingBox? = null
+    private val EPS = 1e-5
 
     private val locationSettings = registerForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
@@ -100,7 +106,17 @@ class DisponibleActivity : AppCompatActivity() {
 
         posicionFirestore()
 
-        binding.back.setOnClickListener { finish() }
+        binding.back.setOnClickListener {
+            if (isTaskRoot) {
+                // No hay actividad anterior: lanzamos MenuAccountActivity
+                val intent = Intent(this, MenuAccountActivity::class.java)
+                startActivity(intent)
+                finish()
+            } else {
+                // Hay actividad anterior: simplemente cerramos esta
+                finish()
+            }
+        }
     }
 
     override fun onResume() {
@@ -245,14 +261,36 @@ class DisponibleActivity : AppCompatActivity() {
         return RADIUS_OF_EARTH_KM * c
     }
 
+    private fun casiIgual(a: Double, b: Double, eps: Double = EPS) =
+        abs(a - b) < eps
+
     private fun ajustarVistaMapa(p1: GeoPoint, p2: GeoPoint) {
-        val padding = 0.09 // Margen adicional
+
+        // 1. Calculamos la nueva caja que **deberíamos** mostrar
+        val padding = 0.09
         val latMin = min(p1.latitude, p2.latitude) - padding
         val latMax = max(p1.latitude, p2.latitude) + padding
         val lonMin = min(p1.longitude, p2.longitude) - padding
         val lonMax = max(p1.longitude, p2.longitude) + padding
+        val nuevaCaja = BoundingBox(latMax, lonMax, latMin, lonMin)
 
-        val boundingBox = BoundingBox(latMax, lonMax, latMin, lonMin)
-        map.zoomToBoundingBox(boundingBox, true)
+        // 2. Decidimos si realmente hay que cambiar la vista
+        val hayQueAjustar = when {
+            !primeraAjustada -> true
+            ultimaCaja == null  -> true
+            else -> {
+                // Comparamos lados con tolerancia EPS
+                !casiIgual(nuevaCaja.latNorth, ultimaCaja!!.latNorth) ||
+                        !casiIgual(nuevaCaja.latSouth, ultimaCaja!!.latSouth) ||
+                        !casiIgual(nuevaCaja.lonEast,  ultimaCaja!!.lonEast)  ||
+                        !casiIgual(nuevaCaja.lonWest,  ultimaCaja!!.lonWest)
+            }
+        }
+
+        if (hayQueAjustar) {
+            map.zoomToBoundingBox(nuevaCaja, true)
+            primeraAjustada = true
+            ultimaCaja = nuevaCaja
+        }
     }
 }
