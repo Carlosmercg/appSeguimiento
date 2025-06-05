@@ -70,6 +70,11 @@ class DisponibleActivity : AppCompatActivity() {
         binding = ActivityDisponibleBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Leer extras una sola vez:
+        userID   = intent.getStringExtra("usuarioID").orEmpty()
+        userName = intent.getStringExtra("usuarioNombre")
+        binding.nombreUsuarioBanner.text = userName ?: "Usuario"
+
         // Ajuste para el notch
         ViewCompat.setOnApplyWindowInsetsListener(binding.banner) { view, insets ->
             val top = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top
@@ -77,11 +82,11 @@ class DisponibleActivity : AppCompatActivity() {
             insets
         }
 
-        userID = intent.getStringExtra("usuarioID").orEmpty()
-        userName = intent.getStringExtra("usuarioNombre")
-        binding.nombreUsuarioBanner.text = userName ?: "Usuario"
-
-        Configuration.getInstance().load(this, androidx.preference.PreferenceManager.getDefaultSharedPreferences(this))
+        // Configuración de OSM, Geocoder y Location
+        Configuration.getInstance().load(
+            this,
+            androidx.preference.PreferenceManager.getDefaultSharedPreferences(this)
+        )
         geocoder = Geocoder(baseContext)
         map = binding.osmMap
         map.setTileSource(TileSourceFactory.MAPNIK)
@@ -91,7 +96,11 @@ class DisponibleActivity : AppCompatActivity() {
         locationRequest = createLocationRequest()
         locationCallback = createLocationCallback()
 
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
             if (!askedPermissionAlready) {
                 locationPermission.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
                 askedPermissionAlready = true
@@ -110,7 +119,11 @@ class DisponibleActivity : AppCompatActivity() {
         if (uims.nightMode == UiModeManager.MODE_NIGHT_YES) {
             map.overlayManager.tilesOverlay.setColorFilter(TilesOverlay.INVERT_COLORS)
         }
-        if (!askedToEnableGps && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+        if (!askedToEnableGps && ActivityCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
             askedToEnableGps = true
             locationSettings()
         }
@@ -159,7 +172,12 @@ class DisponibleActivity : AppCompatActivity() {
 
                 if (::posicion2.isInitialized) {
                     binding.distancia.text = "📍 Distancia hasta ti: %.2f Km".format(
-                        distance(posicion.latitude, posicion.longitude, posicion2.latitude, posicion2.longitude)
+                        distance(
+                            posicion.latitude,
+                            posicion.longitude,
+                            posicion2.latitude,
+                            posicion2.longitude
+                        )
                     )
                     ajustarVistaMapa(posicion, posicion2)
                 }
@@ -168,7 +186,11 @@ class DisponibleActivity : AppCompatActivity() {
     }
 
     private fun startLocationUpdates() {
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
             locationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
         }
     }
@@ -227,7 +249,12 @@ class DisponibleActivity : AppCompatActivity() {
 
                             if (::posicion.isInitialized) {
                                 binding.distancia.text = "📍 Distancia hasta ti: %.2f Km".format(
-                                    distance(posicion.latitude, posicion.longitude, posicion2.latitude, posicion2.longitude)
+                                    distance(
+                                        posicion.latitude,
+                                        posicion.longitude,
+                                        posicion2.latitude,
+                                        posicion2.longitude
+                                    )
                                 )
                                 ajustarVistaMapa(posicion, posicion2)
                             }
@@ -240,7 +267,8 @@ class DisponibleActivity : AppCompatActivity() {
     private fun distance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
         val dLat = Math.toRadians(lat2 - lat1)
         val dLon = Math.toRadians(lon2 - lon1)
-        val a = sin(dLat / 2).pow(2.0) + cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) * sin(dLon / 2).pow(2.0)
+        val a = sin(dLat / 2).pow(2.0) +
+                cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) * sin(dLon / 2).pow(2.0)
         val c = 2 * atan2(sqrt(a), sqrt(1 - a))
         return RADIUS_OF_EARTH_KM * c
     }
