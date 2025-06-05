@@ -24,11 +24,25 @@ class ServicioNotif : Service() {
 
     private val CHANNEL_ID = "DisponibilidadUsuarios"
     private val CHANNEL_NAME = "Disponibilidad de usuarios"
+    private val FOREGROUND_ID = 1
     private var listenerRegistration: ListenerRegistration? = null
 
     override fun onCreate() {
         super.onCreate()
+
+        // 1) Crear el canal de notificaciones (Android O+)
         crearCanalNotificaciones()
+
+        // 2) Construir una notificación mínima para el foreground service
+        val notifForeground = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(com.example.taller3.R.drawable.hombre)
+            .setContentTitle("Servicio activo")
+            .setContentText("Escuchando cambios de disponibilidad")
+            .setPriority(NotificationCompat.PRIORITY_MIN)
+            .setOngoing(true)
+            .build()
+
+        startForeground(FOREGROUND_ID, notifForeground)
         registrarListenerDisponibilidad()
     }
 
@@ -65,9 +79,7 @@ class ServicioNotif : Service() {
                     Log.e("ServicioNotif", "Error al escuchar cambios", error)
                     return@addSnapshotListener
                 }
-                if (snapshots == null) {
-                    return@addSnapshotListener
-                }
+                if (snapshots == null) return@addSnapshotListener
 
                 for (change in snapshots.documentChanges) {
                     if (change.type == DocumentChange.Type.MODIFIED) {
@@ -75,6 +87,8 @@ class ServicioNotif : Service() {
                         val userId = doc.id
                         val nombre = doc.getString("nombre")
                         val disponible = doc.getBoolean("disponible")
+
+                        // No notificar al propio usuario
                         if (currentUser != null && userId == currentUser.uid) {
                             continue
                         }
@@ -91,7 +105,7 @@ class ServicioNotif : Service() {
                             LoginActivity::class.java
                         }
 
-                        // Construir la notificación
+                        // Construir la notificación "remota"
                         val notif = buildNotification(
                             "Cambio de disponibilidad",
                             mensaje,
@@ -100,11 +114,13 @@ class ServicioNotif : Service() {
                             null
                         )
 
+                        // VERIFICAR PERMISO ANTES DE NOTIFICAR (Android 13+)
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                             if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
                                 PackageManager.PERMISSION_GRANTED
                             ) {
-                                NotificationManagerCompat.from(this).notify(userId.hashCode(), notif)
+                                NotificationManagerCompat.from(this)
+                                    .notify(userId.hashCode(), notif)
                             } else {
                                 Log.w(
                                     "ServicioNotif",
@@ -112,7 +128,8 @@ class ServicioNotif : Service() {
                                 )
                             }
                         } else {
-                            NotificationManagerCompat.from(this).notify(userId.hashCode(), notif)
+                            NotificationManagerCompat.from(this)
+                                .notify(userId.hashCode(), notif)
                         }
                     }
                 }
