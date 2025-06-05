@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.taller3.Mapas.DisponibleActivity
 import com.example.taller3.Models.Usuario
@@ -25,43 +27,55 @@ class UsuariosDisponiblesActivity : AppCompatActivity() {
         binding = ActivityUsuariosDisponiblesBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        cargarUsuariosDisponibles()
+        setupRecyclerView()
+        escucharUsuariosDisponibles()
 
-        adapter = UsuarioDisponibleAdapter(usuarios) { usuario ->
-            Intent(this, DisponibleActivity::class.java).apply {
-                Log.d("UsuariosDisponibles", "Usuario seleccionado: $usuario")
-                putExtra("usuarioID", usuario.id)
-            }.also(::startActivity)
+        binding.back.setOnClickListener {
+            finish() // volver a la actividad anterior correctamente
         }
 
+        // Ajustar padding del banner para evitar notch
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.banner)) { view, insets ->
+            view.setPadding(
+                view.paddingLeft,
+                insets.getInsets(WindowInsetsCompat.Type.systemBars()).top,
+                view.paddingRight,
+                view.paddingBottom
+            )
+            insets
+        }
+    }
+
+    private fun setupRecyclerView() {
+        adapter = UsuarioDisponibleAdapter(usuarios) { usuario ->
+            Intent(this, DisponibleActivity::class.java).apply {
+                putExtra("usuarioID", usuario.id)
+                putExtra("usuarioNombre", usuario.nombre)
+            }.also(::startActivity)
+        }
         binding.listaUsuariosDisponibles.layoutManager = LinearLayoutManager(this)
         binding.listaUsuariosDisponibles.adapter = adapter
     }
 
-    override fun onResume() {
-        super.onResume()
-        cargarUsuariosDisponibles()
-    }
-
-    private fun cargarUsuariosDisponibles() {
+    private fun escucharUsuariosDisponibles() {
         FirebaseFirestore.getInstance()
             .collection("usuarios")
             .whereEqualTo("disponible", true)
-            .get()
-            .addOnSuccessListener { resultado ->
+            .addSnapshotListener { snapshots, e ->
+                if (e != null || snapshots == null) {
+                    Toast.makeText(this, "Error al escuchar usuarios", Toast.LENGTH_SHORT).show()
+                    Log.e("UsuariosDisponibles", "Firestore listener error: ", e)
+                    return@addSnapshotListener
+                }
+
                 usuarios.clear()
-                for (documento in resultado) {
-                    if(documento.id != auth.currentUser?.uid) {
-                        val usuario = documento.toObject(Usuario::class.java)
+                for (document in snapshots) {
+                    if (document.id != auth.currentUser?.uid) {
+                        val usuario = document.toObject(Usuario::class.java)
                         usuarios.add(usuario)
                     }
-                    //Log.d("UsuariosDisponibles", "Usuario agregado: $usuario")
                 }
                 adapter.notifyDataSetChanged()
-            }
-            .addOnFailureListener {
-                Toast.makeText(this, "Error al cargar usuarios disponibles", Toast.LENGTH_LONG).show()
-                Log.e("UsuariosDisponibles", "Firestore error: ", it)
             }
     }
 }
