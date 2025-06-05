@@ -15,6 +15,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.example.taller3.Auth.LoginActivity
 import com.example.taller3.Mapas.DisponibleActivity
+import com.example.taller3.MenuAccountActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
@@ -29,11 +30,7 @@ class ServicioNotif : Service() {
 
     override fun onCreate() {
         super.onCreate()
-
-        // 1) Crear el canal de notificaciones (Android O+)
         crearCanalNotificaciones()
-
-        // 2) Construir una notificación mínima para el foreground service
         val notifForeground = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(com.example.taller3.R.drawable.hombre)
             .setContentTitle("Servicio activo")
@@ -88,8 +85,8 @@ class ServicioNotif : Service() {
                         val nombre = doc.getString("nombre")
                         val disponible = doc.getBoolean("disponible")
 
-                        // No notificar al propio usuario
                         if (currentUser != null && userId == currentUser.uid) {
+                            Log.d("ServicioNotif", "Ignorando notificación porque es el mismo UID: $userId")
                             continue
                         }
 
@@ -99,22 +96,29 @@ class ServicioNotif : Service() {
                             else -> "Usuario cambió su estado"
                         }
 
-                        val destinoClass: Class<*> = if (FirebaseAuth.getInstance().currentUser != null) {
-                            DisponibleActivity::class.java
+                        val destinoClass: Class<*>
+                        val extraUserId: String?
+                        val extraUserName: String?
+
+                        if (disponible == true) {
+                            destinoClass   = DisponibleActivity::class.java
+                            extraUserId    = userId
+                            extraUserName  = nombre ?: ""
                         } else {
-                            LoginActivity::class.java
+                            destinoClass   = MenuAccountActivity::class.java
+                            extraUserId    = null
+                            extraUserName  = null
                         }
 
-                        // Construir la notificación "remota"
                         val notif = buildNotification(
                             "Cambio de disponibilidad",
                             mensaje,
                             com.example.taller3.R.drawable.hombre,
                             destinoClass,
-                            null
+                            extraUserId,
+                            extraUserName
                         )
 
-                        // VERIFICAR PERMISO ANTES DE NOTIFICAR (Android 13+)
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                             if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
                                 PackageManager.PERMISSION_GRANTED
@@ -141,11 +145,13 @@ class ServicioNotif : Service() {
         message: String,
         iconRes: Int,
         destino: Class<*>,
-        extra: String?
+        extraUserId: String?,
+        extraUserName: String?
     ): Notification {
         val intent = Intent(this, destino).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            extra?.let { putExtra("extra", it) }
+            extraUserId?.let { putExtra("usuarioID", it) }
+            extraUserName?.let { putExtra("usuarioNombre", it) }
         }
         val pending = PendingIntent.getActivity(
             this,
