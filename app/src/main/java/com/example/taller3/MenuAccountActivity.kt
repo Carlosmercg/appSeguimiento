@@ -39,6 +39,26 @@ class MenuAccountActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMenuAccountBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                Log.d("MenuAccountActivity", ">>> Permiso POST_NOTIFICATIONS CONCEDIDO. Arrancando ServicioNotif.")
+                startServicioNotif()
+            } else {
+                Log.d("MenuAccountActivity", ">>> Permiso POST_NOTIFICATIONS NO concedido. Solicitando permiso.")
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    REQUEST_NOTIF_PERMISSION
+                )
+            }
+        } else {
+            startServicioNotif()
+        }
+
 
         val user = auth.currentUser
         if (user == null) {
@@ -164,21 +184,24 @@ class MenuAccountActivity : AppCompatActivity() {
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQUEST_NOTIF_PERMISSION
-            && grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED
-        ) {
-            val servicio = Intent(this, ServicioNotif::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                ContextCompat.startForegroundService(this, servicio)
+        if (requestCode == REQUEST_NOTIF_PERMISSION) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.d("MenuAccountActivity", ">>> Permiso POST_NOTIFICATIONS fue concedido en runtime. Arrancando ServicioNotif.")
+                startServicioNotif()
             } else {
-                startService(servicio)
+                Log.w("MenuAccountActivity", ">>> Permiso POST_NOTIFICATIONS DENEGADO.")
+                Toast.makeText(this, "No recibirás notificaciones.", Toast.LENGTH_SHORT).show()
             }
-        } else {
-            Toast.makeText(
-                this,
-                "Necesitas habilitar las notificaciones para que el servicio funcione",
-                Toast.LENGTH_LONG
-            ).show()
         }
+    }
+
+    private fun startServicioNotif() {
+        val intent = Intent(this, ServicioNotif::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            ContextCompat.startForegroundService(this, intent)
+        } else {
+            startService(intent)
+        }
+        Log.d("MenuAccountActivity", ">>> startServicioNotif() llamado.")
     }
 }

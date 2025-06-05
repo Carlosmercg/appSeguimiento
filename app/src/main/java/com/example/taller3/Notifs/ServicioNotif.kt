@@ -13,7 +13,6 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.example.taller3.Auth.LoginActivity
 import com.example.taller3.Mapas.DisponibleActivity
 import com.example.taller3.MenuAccountActivity
 import com.google.firebase.auth.FirebaseAuth
@@ -30,7 +29,10 @@ class ServicioNotif : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        Log.d("ServicioNotif", ">>> ServicioNotif.onCreate(): Arrancando servicio y listener de disponibilidad.")
+
         crearCanalNotificaciones()
+
         val notifForeground = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(com.example.taller3.R.drawable.hombre)
             .setContentTitle("Servicio activo")
@@ -43,21 +45,18 @@ class ServicioNotif : Service() {
         registrarListenerDisponibilidad()
     }
 
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
-    }
+    override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
         super.onDestroy()
+        Log.d("ServicioNotif", ">>> ServicioNotif.onDestroy(): Cerrando listener.")
         listenerRegistration?.remove()
     }
 
     private fun crearCanalNotificaciones() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val canal = NotificationChannel(
-                CHANNEL_ID,
-                CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_DEFAULT
+                CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
                 description = "Notificaciones cuando cambia la disponibilidad"
             }
@@ -70,13 +69,23 @@ class ServicioNotif : Service() {
         val db = FirebaseFirestore.getInstance()
         val currentUser = FirebaseAuth.getInstance().currentUser
 
+        if (currentUser == null) {
+            Log.e("ServicioNotif", ">>> Usuario no autenticado. No se inicializa listener.")
+            return
+        } else {
+            Log.d("ServicioNotif", ">>> Listener Firestore iniciado para UID: ${currentUser.uid}")
+        }
+
         listenerRegistration = db.collection("usuarios")
             .addSnapshotListener { snapshots, error ->
                 if (error != null) {
                     Log.e("ServicioNotif", "Error al escuchar cambios", error)
                     return@addSnapshotListener
                 }
-                if (snapshots == null) return@addSnapshotListener
+                if (snapshots == null) {
+                    Log.e("ServicioNotif", ">>> snapshots == null en el listener. No hay datos.")
+                    return@addSnapshotListener
+                }
 
                 for (change in snapshots.documentChanges) {
                     if (change.type == DocumentChange.Type.MODIFIED) {
@@ -85,31 +94,48 @@ class ServicioNotif : Service() {
                         val nombre = doc.getString("nombre")
                         val disponible = doc.getBoolean("disponible")
 
-                        if (currentUser != null && userId == currentUser.uid) {
-                            Log.d("ServicioNotif", "Ignorando notificación porque es el mismo UID: $userId")
+                        Log.d(
+                            "ServicioNotif",
+                            ">>> Cambio Firestore: docId=$userId disponible=$disponible nombre=$nombre"
+                        )
+
+                        // No notificar al propio usuario
+                        if (currentUser.uid == userId) {
+                            Log.d(
+                                "ServicioNotif",
+                                ">>> Cambio detectado es del usuario actual ($userId), se ignora."
+                            )
                             continue
                         }
 
+                        // Armamos el mensaje:
                         val mensaje = when {
                             nombre != null && disponible == true -> "$nombre está disponible"
                             nombre != null && disponible == false -> "$nombre ya no está disponible"
                             else -> "Usuario cambió su estado"
                         }
 
+                        // Decidir a qué Activity vamos y qué extras enviamos:
                         val destinoClass: Class<*>
                         val extraUserId: String?
                         val extraUserName: String?
 
                         if (disponible == true) {
-                            destinoClass   = DisponibleActivity::class.java
-                            extraUserId    = userId
-                            extraUserName  = nombre ?: ""
+                            destinoClass = DisponibleActivity::class.java
+                            extraUserId = userId
+                            extraUserName = nombre ?: ""
                         } else {
-                            destinoClass   = MenuAccountActivity::class.java
-                            extraUserId    = null
-                            extraUserName  = null
+                            destinoClass = MenuAccountActivity::class.java
+                            extraUserId = null
+                            extraUserName = null
                         }
 
+                        Log.d(
+                            "ServicioNotif",
+                            ">>> Lanzando notificación. destinoClass=${destinoClass.simpleName} extraUserId=$extraUserId extraUserName=$extraUserName"
+                        )
+
+                        // Construir la notificación con los extras correspondientes
                         val notif = buildNotification(
                             "Cambio de disponibilidad",
                             mensaje,
@@ -119,12 +145,14 @@ class ServicioNotif : Service() {
                             extraUserName
                         )
 
+                        // VERIFICAR PERMISO ANTES DE NOTIFICAR (Android 13+)
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                             if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
                                 PackageManager.PERMISSION_GRANTED
                             ) {
                                 NotificationManagerCompat.from(this)
                                     .notify(userId.hashCode(), notif)
+                                Log.d("ServicioNotif", ">>> Notificación enviada (Android 13+)")
                             } else {
                                 Log.w(
                                     "ServicioNotif",
@@ -134,6 +162,7 @@ class ServicioNotif : Service() {
                         } else {
                             NotificationManagerCompat.from(this)
                                 .notify(userId.hashCode(), notif)
+                            Log.d("ServicioNotif", ">>> Notificación enviada (Android <= 12)")
                         }
                     }
                 }
